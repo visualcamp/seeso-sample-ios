@@ -1,0 +1,522 @@
+//
+//  ViewController.swift
+//  SeeSoSample
+//
+//  Created by VisualCamp on 2020/06/12.
+//  Copyright © 2020 VisaulCamp. All rights reserved.
+//
+
+import UIKit
+import AVKit
+import SeeSo
+
+class ViewController: UIViewController {
+    
+    let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
+    
+    //
+    enum AppState : String {
+        case Disable = "Disable" // User denied access to the camera.
+        case Idle = "Idle" // User has allowed access to the camera.
+        case Initailzed = "Initalized" // GazeTracker has been successfully created.
+        case Tracking = "Tracking" // Gaze Tracking state.
+        case Calibrating = "Calibrating" // It is being calibrated.
+    }
+    
+    var tracker : GazeTracker? = nil
+    let statusLabel : UILabel = UILabel() // This label tells you the current status.
+    
+    //A switch with the ability to create or destroy Gaze Tracker objects.
+    let initTrackerLabel : UILabel = UILabel()
+    let initTrackerSwitch : UISwitch = UISwitch()
+    
+    //This switch is responsible for starting or stopping gaze tracking.
+    let startTrackingLabel : UILabel = UILabel()
+    let startTrackingSwitch : UISwitch = UISwitch()
+    
+    //This switch determines whether or not to put a filter in gaze coordinates.
+    let gazeFilterLabel : UILabel = UILabel()
+    let gazeFilterSwitch : UISwitch = UISwitch()
+    
+    var gazePointView : GazePointView? = nil
+    var caliPointView : CalibrationPointView? = nil
+    
+    var caliMode : CalibrationMode = .FIVE_POINT
+    
+    
+    let startCalibrationLabel : UILabel = UILabel()
+    let calibrationBtn : UIButton = UIButton()
+    let fiveRadioBtn : RadioButton = RadioButton()
+    let oneRadioBtn : RadioButton = RadioButton()
+    
+    var isFiltered : Bool = false
+    
+    let preview : UIView = UIView()
+    
+    var curState : AppState? = nil {
+        didSet {
+            changeState()
+        }
+    }
+    
+    //
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        //Check if the camera is accessible.
+        if !checkAccessCamera() {
+            //If access is not possible, the user is requested to access.
+            requestAccess()
+        }else{
+            curState = .Idle
+        }
+        initViewComponents()
+    }
+    
+    private func requestAccess(){
+        AVCaptureDevice.requestAccess(for: AVMediaType.video) { response in
+            if response {
+                self.curState = .Idle
+            } else {
+                //If you are denied access, you cannot use any function.
+                self.curState = .Disable
+            }
+        }
+    }
+    
+    
+    // Whenever the AppState, ui processing and appropriate functions are called.
+    private func changeState() {
+        if let state : AppState = curState {
+            DispatchQueue.main.async {
+                switch state {
+                case .Disable:
+                    self.disableUIComponents()
+                case .Idle:
+                    self.setIdleStateUIComponents()
+                case .Initailzed:
+                    self.setInitializedStateUIComponents()
+                     self.tracker?.removeCameraPreview()
+                case .Tracking:
+                    self.setTrackingStateUIComponents()
+                    self.calibrationBtn.setTitle("START", for: .normal)
+                case .Calibrating:
+                    self.setCalibratingUIComponents()
+                }
+                self.setStatusLableText(contents: state.rawValue)
+            }
+        }
+    }
+    
+    
+    
+    
+    private func checkAccessCamera() -> Bool {
+        return AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+    }
+    
+    //This function is called when the switch is clicked.
+    @objc func onClickSwitch(sender : UISwitch){
+        sender.isEnabled = false
+        if sender == initTrackerSwitch {
+            if sender.isOn {
+                initGazeTracker()
+            }else{
+                deinitGazeTracker()
+                sender.isEnabled = true
+            }
+        } else if sender == startTrackingSwitch {
+            if sender.isOn {
+                startTracking()
+            }else{
+                stopTracking()
+            }
+        } else if sender == gazeFilterSwitch {
+            self.isFiltered = sender.isOn
+            enableSwitch(select: sender)
+        }
+    }
+    
+    //This function is called when the button is clicked.
+    @objc func onClickBtn(sender : UIButton){
+        if sender == fiveRadioBtn {
+            if caliMode == .ONE_POINT{
+                caliMode = .FIVE_POINT
+                print("Five-point calibration mode is selected.")
+            }
+        }else if sender == oneRadioBtn {
+            if caliMode == .FIVE_POINT{
+                caliMode = .ONE_POINT
+                print("One-point calibration mode is selected.")
+            }
+        }else if sender == calibrationBtn {
+            if curState == AppState.Calibrating {
+                stopCalibration()
+                DispatchQueue.main.async {
+                    self.curState = .Tracking
+                    self.calibrationBtn.setTitle("START", for: .normal)
+                }
+            }else if curState == AppState.Tracking {
+                startCalibration()
+                DispatchQueue.main.async {
+                    self.calibrationBtn.setTitle("STOP", for: .normal)
+                }
+            }
+        }
+    }
+    
+    private func startCalibration(){
+        print("StartCalimode : \(caliMode.description)")
+       let result = tracker?.startCalibration(mode: caliMode)
+        if let isStart = result {
+            if !isStart{
+                setStatusLableText(contents: "Calibration Started failed.")
+            }
+        }
+    }
+    
+    private func stopCalibration(){
+        tracker?.stopCalibration()
+        curState = .Tracking
+    }
+    
+    private func startTracking(){
+        tracker?.startTracking()
+    }
+    
+    private func stopTracking(){
+        tracker?.StopTracking()
+    }
+    
+    private func initGazeTracker() {
+        GazeTracker.initGazeTracker(license: licenseKey, delegate: self)
+    }
+    
+    private func deinitGazeTracker(){
+        GazeTracker.deinitGazeTracker(tracker: tracker)
+        tracker = nil
+        curState = .Idle
+    }
+    
+    
+    
+}
+
+extension ViewController : InitializationDelegate {
+    func onInitialized(tracker: GazeTracker?, error: InitializationError) {
+        enableSwitch(select: initTrackerSwitch)
+        if tracker != nil {
+            self.tracker = tracker
+            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, eyeMovementDelegate: self, imageDelegate: nil)
+            curState = .Initailzed
+        }else {
+            setStatusLableText(contents: error.description)
+            resetSwitch(select: initTrackerSwitch)
+            self.enableSwitch(select: initTrackerSwitch)
+        }
+    }
+}
+
+extension ViewController : StatusDelegate {
+    func onStarted() {
+        curState = .Tracking
+        self.tracker?.setCameraPreview(preview: self.preview)
+    }
+    
+    func onStopped(error: StatusError) {
+        setStatusLableText(contents: "onStopped : \(error.description)")
+        resetSwitch(select: startTrackingSwitch)
+        self.enableSwitch(select: startTrackingSwitch)
+        self.tracker?.removeCameraPreview()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+            self.curState = .Initailzed
+        })
+    }
+}
+
+extension ViewController : GazeDelegate {
+    func onGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
+        if !self.isFiltered {
+            if state == .TRACKING {
+                self.gazePointView?.moveView(x: Double(x), y: Double(y))
+            }else {
+                self.hidePointView(view: self.gazePointView!)
+            }
+        }
+    }
+    
+    func onFilteredGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
+        if self.isFiltered {
+            if state == .TRACKING {
+                self.gazePointView?.moveView(x: Double(x), y: Double(y))
+                
+            }else {
+                self.hidePointView(view: self.gazePointView!)
+            }
+        }
+    }
+}
+
+extension ViewController : CalibrationDelegate {
+    func onCalibrationProgress(progress: Float) {
+        caliPointView?.setProgress(progress: progress)
+    }
+    
+    func onCalibrationNextPoint(x: Float, y: Float) {
+        if curState != AppState.Calibrating {
+            curState = .Calibrating
+        }
+        DispatchQueue.main.async {
+            self.caliPointView?.center = CGPoint(x: CGFloat(x), y: CGFloat(y))
+            self.tracker?.startCollectSamples()
+        }
+    }
+    
+    func onCalibrationFinished() {
+        print("Finished calibration.")
+        curState = .Tracking
+        changeState()
+    }
+}
+
+extension ViewController : EyeMovementDelegate {
+    func onEyeMovement(timestamp: Double, duration: Double, x: Float, y: Float, state: EyeMovementState) {
+        print("eyeMovement(\(x), \(y)) = \(state.description)")
+    }
+}
+
+
+
+// UI componenents setting functions
+extension ViewController {
+    
+    private func initViewComponents(){
+        initStatusLabel()
+        initInitTrackerUI()
+        initStartTrackingUI()
+        initGazePointView()
+        initGazeFilterUI()
+        initStartCalibrationUI()
+        initCalibrationPointView()
+        initCalibrationModeUI()
+        initPreview()
+    }
+    
+    private func initStatusLabel(){
+        statusLabel.frame.size = CGSize(width: 120, height: 40)
+        statusLabel.center = CGPoint(x: self.view.frame.width/2, y: 50)
+        statusLabel.textAlignment = .center
+        statusLabel.adjustsFontSizeToFitWidth = true
+        statusLabel.textColor = UIColor.white
+        statusLabel.font = .systemFont(ofSize: 20)
+        self.view.addSubview(statusLabel)
+    }
+    
+    private func initInitTrackerUI(){
+        initTrackerSwitch.frame.size = CGSize(width: 50, height: 50)
+        initTrackerSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 20)
+        initTrackerSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(initTrackerSwitch)
+        
+        initTrackerLabel.frame.size = CGSize(width: 150, height: initTrackerSwitch.frame.height)
+        initTrackerLabel.frame.origin = CGPoint(x: initTrackerSwitch.frame.minX - (initTrackerLabel.frame.width + 5), y: initTrackerSwitch.frame.minY)
+        initTrackerLabel.text = "InitGazeTracker"
+        initTrackerLabel.textColor = UIColor.white
+        initTrackerLabel.textAlignment = .center
+        self.view.addSubview(initTrackerLabel)
+        
+    }
+    
+    private func initPreview() {
+        preview.frame.size = CGSize(width: 160, height: 120)
+        preview.center = CGPoint(x: self.view.frame.width/2, y: 160)
+        preview.alpha = 0.7
+        self.view.addSubview(preview)
+    }
+    
+    private func initStartTrackingUI(){
+        startTrackingSwitch.frame.size = CGSize(width: 50, height: 50)
+        startTrackingSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 80)
+        startTrackingSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(startTrackingSwitch)
+        
+        startTrackingLabel.frame.size = CGSize(width: 150, height: startTrackingSwitch.frame.height)
+        startTrackingLabel.frame.origin = CGPoint(x: startTrackingSwitch.frame.minX - (startTrackingLabel.frame.width + 5), y: startTrackingSwitch.frame.minY)
+        startTrackingLabel.text = "Tracking"
+        startTrackingLabel.textColor = UIColor.white
+        startTrackingLabel.textAlignment = .center
+        self.view.addSubview(startTrackingLabel)
+        
+        
+    }
+    
+    private func initGazeFilterUI(){
+        gazeFilterSwitch.frame.size = CGSize(width: 50, height: 50)
+        gazeFilterSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 140)
+        gazeFilterSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(gazeFilterSwitch)
+        
+        gazeFilterLabel.frame.size = CGSize(width: 150, height: gazeFilterSwitch.frame.height)
+        gazeFilterLabel.frame.origin = CGPoint(x: gazeFilterSwitch.frame.minX - (startTrackingLabel.frame.width + 5), y: gazeFilterSwitch.frame.minY)
+        gazeFilterLabel.text = "Filtering"
+        gazeFilterLabel.textColor = UIColor.white
+        gazeFilterLabel.textAlignment = .center
+        self.view.addSubview(gazeFilterLabel)
+    }
+    
+    private func initGazePointView(){
+        self.gazePointView = GazePointView(frame: self.view.bounds)
+        self.view.addSubview(gazePointView!)
+        hidePointView(view: gazePointView!)
+    }
+    
+    private func initCalibrationPointView(){
+        self.caliPointView = CalibrationPointView(frame: CGRect(origin: .zero, size: CGSize(width: 40, height: 40)))
+        self.view.addSubview(caliPointView!)
+        hidePointView(view: caliPointView!)
+    }
+    
+    private func initStartCalibrationUI(){
+        calibrationBtn.frame.size = CGSize(width: 50, height: 50)
+        calibrationBtn.setTitleColor(.gray, for: .disabled)
+        calibrationBtn.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 260)
+        calibrationBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
+        calibrationBtn.setTitle("START", for: .normal)
+        calibrationBtn.titleLabel?.adjustsFontSizeToFitWidth = true
+        self.view.addSubview(calibrationBtn)
+    }
+    
+    private func initCalibrationModeUI(){
+        oneRadioBtn.frame.size = CGSize(width: 50, height: 50)
+        oneRadioBtn.isSelected = false
+        oneRadioBtn.alternateButton = [fiveRadioBtn]
+        oneRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 260)
+        oneRadioBtn.setTitle("ONE", for: .normal)
+        oneRadioBtn.awakeFromNib()
+        oneRadioBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
+        self.view.addSubview(oneRadioBtn)
+        
+        fiveRadioBtn.frame.size = CGSize(width: 50, height: 50)
+        fiveRadioBtn.isSelected = true
+        fiveRadioBtn.alternateButton = [oneRadioBtn]
+        fiveRadioBtn.awakeFromNib()
+        fiveRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 120, y: self.view.frame.height/2 + 260)
+        fiveRadioBtn.setTitle("FIVE", for: .normal)
+        fiveRadioBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
+        self.view.addSubview(fiveRadioBtn)
+        
+        startCalibrationLabel.frame.size = CGSize(width: 150, height: oneRadioBtn.frame.height)
+        startCalibrationLabel.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 200)
+        startCalibrationLabel.text = "Calibration"
+        startCalibrationLabel.textColor = UIColor.white
+        startCalibrationLabel.textAlignment = .center
+        self.view.addSubview(startCalibrationLabel)
+    }
+    
+    
+    private func disableUIComponents(){
+        disableSwitch(select: initTrackerSwitch)
+        disableSwitch(select: startTrackingSwitch)
+        disableSwitch(select: gazeFilterSwitch)
+        disableBtn(select: calibrationBtn)
+        disableBtn(select: fiveRadioBtn)
+        disableBtn(select: oneRadioBtn)
+    }
+    
+    private func setIdleStateUIComponents(){
+        disableSwitch(select: startTrackingSwitch)
+        disableSwitch(select: gazeFilterSwitch)
+        disableBtn(select: calibrationBtn)
+        resetSwitch(select: startTrackingSwitch)
+        resetSwitch(select: gazeFilterSwitch)
+        disableBtn(select: fiveRadioBtn)
+        disableBtn(select: oneRadioBtn)
+        hidePointView(view: gazePointView!)
+        hidePointView(view: caliPointView!)
+    }
+    
+    private func setInitializedStateUIComponents(){
+        enableSwitch(select: startTrackingSwitch)
+        enableSwitch(select: gazeFilterSwitch)
+        disableBtn(select: calibrationBtn)
+        disableBtn(select: fiveRadioBtn)
+        disableBtn(select: oneRadioBtn)
+        hidePointView(view: gazePointView!)
+        hidePointView(view: caliPointView!)
+    }
+    
+    private func setTrackingStateUIComponents(){
+        enableSwitch(select: startTrackingSwitch)
+        showPointView(view: gazePointView!)
+        enableBtn(select: calibrationBtn)
+        enableBtn(select: fiveRadioBtn)
+        enableBtn(select: oneRadioBtn)
+        hidePointView(view: caliPointView!)
+    }
+    
+    private func setCalibratingUIComponents(){
+        hidePointView(view: gazePointView!)
+        showPointView(view: caliPointView!)
+        enableBtn(select: calibrationBtn)
+        disableBtn(select: fiveRadioBtn)
+        disableBtn(select: oneRadioBtn)
+    }
+
+    
+    
+    
+    private func hidePointView(view : UIView){
+        DispatchQueue.main.async {
+            if !view.isHidden {
+                view.isHidden = true
+            }
+        }
+    }
+    
+    private func showPointView(view : UIView){
+        DispatchQueue.main.async {
+            if view.isHidden{
+                view.isHidden = false
+                if view == self.caliPointView {
+                    self.tracker?.startCollectSamples()
+                }
+            }
+        }
+    }
+    private func setStatusLableText(contents : String){
+        DispatchQueue.main.async {
+            self.statusLabel.text = contents
+        }
+    }
+    
+    
+    private func resetSwitch(select :UISwitch){
+        DispatchQueue.main.async {
+            select.setOn(false, animated: true)
+        }
+    }
+    
+    private func disableSwitch(select : UISwitch){
+        DispatchQueue.main.async {
+            select.isEnabled = false
+        }
+    }
+    
+    private func enableSwitch(select : UISwitch) {
+        DispatchQueue.main.async {
+            select.isEnabled = true
+        }
+    }
+    
+    private func disableBtn(select : UIButton){
+        DispatchQueue.main.async {
+            select.isEnabled = false
+        }
+    }
+    
+    private func enableBtn(select : UIButton){
+        DispatchQueue.main.async {
+            select.isEnabled = true
+        }
+    }
+}
+
