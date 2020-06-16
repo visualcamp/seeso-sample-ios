@@ -1,10 +1,10 @@
 # SeeSoSample
 
 ### Index
-[App Introduction](#App-Introduction)
-[Requirements](#Requirements)
-[How to run](#How-to-run)
-[Function description of the app](#Function-description-of-the-app)
+- [App Introduction](#App-Introduction)
+- [Requirements](#Requirements)
+- [How to run](#How-to-run)
+- [Function description of the app](#Function-description-of-the-app)
 
 ## App Introduction
 
