@@ -15,6 +15,8 @@ class ViewController: UIViewController {
     let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
     
     //
+    var frame : Int = 0
+    var lastTime : Double = 0
     enum AppState : String {
         case Disable = "Disable" // User denied access to the camera.
         case Idle = "Idle" // User has allowed access to the camera.
@@ -43,9 +45,13 @@ class ViewController: UIViewController {
     
     var caliMode : CalibrationMode = .FIVE_POINT
     
+    var calibrationData : [Double] = []
     
     let startCalibrationLabel : UILabel = UILabel()
     let calibrationBtn : UIButton = UIButton()
+    let bottomView : UIView = UIView()
+    let loadBtn : UIButton = UIButton()
+    let saveBtn : UIButton = UIButton()
     let fiveRadioBtn : RadioButton = RadioButton()
     let oneRadioBtn : RadioButton = RadioButton()
     
@@ -87,19 +93,31 @@ class ViewController: UIViewController {
     // Whenever the AppState, ui processing and appropriate functions are called.
     private func changeState() {
         if let state : AppState = curState {
+            
+            print("state : \(state.rawValue)")
             DispatchQueue.main.async {
                 switch state {
                 case .Disable:
+                    self.disableLoadBtn()
+                    self.disableSaveBtn()
                     self.disableUIComponents()
                 case .Idle:
                     self.setIdleStateUIComponents()
+                    self.disableLoadBtn()
+                    self.disableSaveBtn()
                 case .Initailzed:
                     self.setInitializedStateUIComponents()
                      self.tracker?.removeCameraPreview()
+                    self.disableLoadBtn()
+                    self.disableSaveBtn()
                 case .Tracking:
+                    if self.checkLoadData() {
+                        self.enableLoadBtn()
+                    }
                     self.setTrackingStateUIComponents()
                     self.calibrationBtn.setTitle("START", for: .normal)
                 case .Calibrating:
+                    self.disableLoadBtn()
                     self.setCalibratingUIComponents()
                 }
                 self.setStatusLableText(contents: state.rawValue)
@@ -161,12 +179,29 @@ class ViewController: UIViewController {
                     self.calibrationBtn.setTitle("STOP", for: .normal)
                 }
             }
+        }else if sender == loadBtn {
+            DispatchQueue.main.async {
+                if self.checkLoadData() {
+                    if self.loadCalibrationData()
+                    {
+                        self.statusLabel.text = "Loaded calibration datas"
+                    }else {
+                        self.statusLabel.text = "Load failed."
+                    }
+                }
+            }
+        }else if sender == saveBtn {
+            DispatchQueue.main.async {
+                self.saveCalibrationData()
+                self.disableSaveBtn()
+                self.statusLabel.text = "Saved calibration datas."
+            }
         }
     }
     
     private func startCalibration(){
         print("StartCalimode : \(caliMode.description)")
-       let result = tracker?.startCalibration(mode: caliMode)
+        let result = tracker?.startCalibration(mode: caliMode)
         if let isStart = result {
             if !isStart{
                 setStatusLableText(contents: "Calibration Started failed.")
@@ -184,7 +219,7 @@ class ViewController: UIViewController {
     }
     
     private func stopTracking(){
-        tracker?.StopTracking()
+        tracker?.stopTracking()
     }
     
     private func initGazeTracker() {
@@ -237,19 +272,22 @@ extension ViewController : GazeDelegate {
     func onGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
         if !self.isFiltered {
             if state == .TRACKING {
+                self.showPointView(view: self.gazePointView!)
                 self.gazePointView?.moveView(x: Double(x), y: Double(y))
-            }else {
+            }else if state == .CALIBRATING || state == .FACE_MISSING{
                 self.hidePointView(view: self.gazePointView!)
             }
+        }else{
         }
     }
     
     func onFilteredGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
         if self.isFiltered {
             if state == .TRACKING {
+                self.showPointView(view: self.gazePointView!)
                 self.gazePointView?.moveView(x: Double(x), y: Double(y))
                 
-            }else {
+            }else if state == .CALIBRATING || state == .FACE_MISSING{
                 self.hidePointView(view: self.gazePointView!)
             }
         }
@@ -267,14 +305,21 @@ extension ViewController : CalibrationDelegate {
         }
         DispatchQueue.main.async {
             self.caliPointView?.center = CGPoint(x: CGFloat(x), y: CGFloat(y))
-            self.tracker?.startCollectSamples()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+                if let result = self.tracker?.startCollectSamples() {
+                    print("startCollectSamples : \(result)")
+                }
+                
+            })
         }
     }
     
-    func onCalibrationFinished() {
+    func onCalibrationFinished(calibrationData : [Double]) {
         print("Finished calibration.")
         curState = .Tracking
         changeState()
+        self.calibrationData = calibrationData
+        enableSaveBtn()
     }
 }
 
@@ -313,7 +358,7 @@ extension ViewController {
     
     private func initInitTrackerUI(){
         initTrackerSwitch.frame.size = CGSize(width: 50, height: 50)
-        initTrackerSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 20)
+        initTrackerSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 - 80)
         initTrackerSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
         self.view.addSubview(initTrackerSwitch)
         
@@ -335,7 +380,7 @@ extension ViewController {
     
     private func initStartTrackingUI(){
         startTrackingSwitch.frame.size = CGSize(width: 50, height: 50)
-        startTrackingSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 80)
+        startTrackingSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 - 20)
         startTrackingSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
         self.view.addSubview(startTrackingSwitch)
         
@@ -351,7 +396,7 @@ extension ViewController {
     
     private func initGazeFilterUI(){
         gazeFilterSwitch.frame.size = CGSize(width: 50, height: 50)
-        gazeFilterSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 140)
+        gazeFilterSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 40)
         gazeFilterSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
         self.view.addSubview(gazeFilterSwitch)
         
@@ -378,7 +423,7 @@ extension ViewController {
     private func initStartCalibrationUI(){
         calibrationBtn.frame.size = CGSize(width: 50, height: 50)
         calibrationBtn.setTitleColor(.gray, for: .disabled)
-        calibrationBtn.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 260)
+        calibrationBtn.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 160)
         calibrationBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
         calibrationBtn.setTitle("START", for: .normal)
         calibrationBtn.titleLabel?.adjustsFontSizeToFitWidth = true
@@ -389,7 +434,7 @@ extension ViewController {
         oneRadioBtn.frame.size = CGSize(width: 50, height: 50)
         oneRadioBtn.isSelected = false
         oneRadioBtn.alternateButton = [fiveRadioBtn]
-        oneRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 260)
+        oneRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 160)
         oneRadioBtn.setTitle("ONE", for: .normal)
         oneRadioBtn.awakeFromNib()
         oneRadioBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
@@ -399,18 +444,87 @@ extension ViewController {
         fiveRadioBtn.isSelected = true
         fiveRadioBtn.alternateButton = [oneRadioBtn]
         fiveRadioBtn.awakeFromNib()
-        fiveRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 120, y: self.view.frame.height/2 + 260)
+        fiveRadioBtn.frame.origin = CGPoint(x: self.view.frame.width - 120, y: self.view.frame.height/2 + 160)
         fiveRadioBtn.setTitle("FIVE", for: .normal)
         fiveRadioBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
         self.view.addSubview(fiveRadioBtn)
         
         startCalibrationLabel.frame.size = CGSize(width: 150, height: oneRadioBtn.frame.height)
-        startCalibrationLabel.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 200)
+        startCalibrationLabel.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 100)
         startCalibrationLabel.text = "Calibration"
         startCalibrationLabel.textColor = UIColor.white
         startCalibrationLabel.textAlignment = .center
         self.view.addSubview(startCalibrationLabel)
+        
+        
+        bottomView.frame = CGRect(x: oneRadioBtn.frame.minX, y: oneRadioBtn.frame.maxY + 20, width: calibrationBtn.frame.maxX - oneRadioBtn.frame.minX, height: 80)
+        self.view.addSubview(bottomView)
+        
+        loadBtn.frame = CGRect(x: 10, y: 5, width: bottomView.frame.width/2 - 20, height: bottomView.frame.height/2 - 20)
+        saveBtn.frame = CGRect(x: bottomView.frame.width/2 + 10, y: 5, width: bottomView.frame.width/2 - 20, height: bottomView.frame.height/2 - 20)
+        
+        loadBtn.setTitle("Load", for: .normal)
+        loadBtn.setTitleColor(.white, for: .normal)
+        loadBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchDown)
+        saveBtn.setTitle("Save", for: .normal)
+        saveBtn.setTitleColor(.white, for: .normal)
+        saveBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchDown)
+        bottomView.addSubview(saveBtn)
+        bottomView.addSubview(loadBtn)
     }
+    
+    
+    private func disableSaveBtn(){
+        DispatchQueue.main.async {
+            self.saveBtn.isHidden = true
+            self.calibrationData.removeAll()
+        }
+    }
+    
+    private func disableLoadBtn(){
+        DispatchQueue.main.async {
+            self.loadBtn.isHidden = true
+        }
+    }
+    
+    
+    private func enableSaveBtn(){
+        DispatchQueue.main.async {
+            self.saveBtn.isHidden = false
+        }
+    }
+    
+    private func enableLoadBtn(){
+        DispatchQueue.main.async {
+            self.loadBtn.isHidden = false
+        }
+    }
+    
+    
+    private func checkLoadData()-> Bool {
+        if let _ = UserDefaults.standard.array(forKey: "calibrationData") as? [Double]{
+            return true
+        }
+        return false
+    }
+    
+    private func loadCalibrationData() -> Bool{
+        if let calibrationData = UserDefaults.standard.array(forKey: "calibrationData") as? [Double]{
+            self.calibrationData = calibrationData
+            return self.tracker!.setCalibrationData(calibrationData: self.calibrationData)
+        }
+        return false
+    }
+    
+    
+    private func saveCalibrationData(){
+        if calibrationData.count > 0 {
+            UserDefaults.standard.removeObject(forKey: "calibrationData")
+            UserDefaults.standard.set(calibrationData, forKey: "calibrationData")
+        }
+    }
+    
+    
     
     
     private func disableUIComponents(){
@@ -462,7 +576,7 @@ extension ViewController {
     }
 
     
-    
+   
     
     private func hidePointView(view : UIView){
         DispatchQueue.main.async {
@@ -477,7 +591,11 @@ extension ViewController {
             if view.isHidden{
                 view.isHidden = false
                 if view == self.caliPointView {
-                    self.tracker?.startCollectSamples()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                        if let result = self.tracker?.startCollectSamples() {
+                            print("startCollectSamples : \(result)")
+                        }
+                    })              
                 }
             }
         }

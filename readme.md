@@ -13,7 +13,7 @@
 ## Requirements
 
 - XCode 11.5
-- SeeSo.framework : 2.2.0
+- SeeSo.framework : 2.2.1
 - Swift: 5.2
 - It must be run on a **real iOS device. (iOS 13.0 +, iPhone 6s +)**
 - It must be an **internet environment.**
@@ -97,3 +97,24 @@ To create. Deactivation again destroys the object.
 
 5. The top label tells you the status of each. If an error occurs, see the api documentation and deal with it.
 6. The camera preview is visible when it is in eye tracking.
+7. When calibration is complete, the save button at the bottom right appears. Click this button to save the calibration information.
+
+    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-1.png](images/7-1.png)
+
+    7-1 After calibration is complete, the save button is activated.
+
+    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-2.png](images/7-2.png)
+
+    7-2 When you click the save button, the label at the top changes to "Saved calibration datas", and the save button disappears.
+
+8. When in tracking state, if there is calibration data stored in the app, the load button is activated. If you click the load button, the eye tracking will proceed with the saved calibration state.
+
+    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-1.png](images/8-1.png)
+
+    8-1 Activation of the load button when tracking status and calibration data is stored in the app.
+
+    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-2.png](images/8-2.png)
+
+    8-2 When the load button is clicked, the label at the top changes to "Loaded calibration datas" and the eye tracking with previous calibration data applied starts.
+
+9. It cannot be loaded when in Calibrating state. Please be aware of this.
