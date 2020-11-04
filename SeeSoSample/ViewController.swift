@@ -65,7 +65,9 @@ class ViewController: UIViewController {
         }
     }
     
-    //
+    //It is an object that filters the gaze coordinate value.
+    var filterManager : OneEuroFilterManager = OneEuroFilterManager()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         //Check if the camera is accessible.
@@ -241,7 +243,7 @@ extension ViewController : InitializationDelegate {
         enableSwitch(select: initTrackerSwitch)
         if tracker != nil {
             self.tracker = tracker
-            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, eyeMovementDelegate: self, imageDelegate: nil)
+            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil)
             curState = .Initailzed
         }else {
             setStatusLableText(contents: error.description)
@@ -269,37 +271,43 @@ extension ViewController : StatusDelegate {
 }
 
 extension ViewController : GazeDelegate {
-    func onGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
-        if !self.isFiltered {
-            if state == .TRACKING {
-                self.showPointView(view: self.gazePointView!)
-                self.gazePointView?.moveView(x: Double(x), y: Double(y))
-            }else if state == .CALIBRATING || state == .FACE_MISSING{
-                self.hidePointView(view: self.gazePointView!)
-            }
+    func onGaze(gazeInfo: GazeInfo) {
+        
+        //During the calibration process, the gaze UI is not displayed.
+        if tracker != nil && tracker!.isCalibrating() {
+            self.hidePointView(view: self.gazePointView!)
         }else{
+            //When no filter is used, the x,y coordinates are used directly to show the gaze coordinates.
+            if !self.isFiltered {
+                if gazeInfo.trackingState == .SUCCESS {
+                    self.showPointView(view: self.gazePointView!)
+                    self.gazePointView?.moveView(x: gazeInfo.x, y: gazeInfo.y)
+                }else {
+                    self.hidePointView(view: self.gazePointView!)
+                }
+            }else{
+                //If the filter is in use, it is displayed on the screen using the filtered value through the filter manager.
+                if gazeInfo.trackingState == .SUCCESS {
+                    if filterManager.filterValues(timestamp: Int(gazeInfo.timestamp), val:gazeInfo.x ,gazeInfo.y) {
+                        let _xy = filterManager.getFilteredValues()
+                        self.showPointView(view: self.gazePointView!)
+                        self.gazePointView?.moveView(x: _xy[0], y: _xy[1])
+                    }
+                }else {
+                    self.hidePointView(view: self.gazePointView!)
+                }
+            } 
         }
     }
-    
-    func onFilteredGaze(timestamp: Double, x: Float, y: Float, state: TrackingState) {
-        if self.isFiltered {
-            if state == .TRACKING {
-                self.showPointView(view: self.gazePointView!)
-                self.gazePointView?.moveView(x: Double(x), y: Double(y))
-                
-            }else if state == .CALIBRATING || state == .FACE_MISSING{
-                self.hidePointView(view: self.gazePointView!)
-            }
-        }
-    }
+
 }
 
 extension ViewController : CalibrationDelegate {
-    func onCalibrationProgress(progress: Float) {
+    func onCalibrationProgress(progress: Double) {
         caliPointView?.setProgress(progress: progress)
     }
     
-    func onCalibrationNextPoint(x: Float, y: Float) {
+    func onCalibrationNextPoint(x: Double, y: Double) {
         if curState != AppState.Calibrating {
             curState = .Calibrating
         }
@@ -323,13 +331,6 @@ extension ViewController : CalibrationDelegate {
     }
 }
 
-extension ViewController : EyeMovementDelegate {
-    func onEyeMovement(timestamp: Double, duration: Double, x: Float, y: Float, state: EyeMovementState) {
-        print("eyeMovement(\(x), \(y)) = \(state.description)")
-    }
-}
-
-
 
 // UI componenents setting functions
 extension ViewController {
@@ -351,7 +352,7 @@ extension ViewController {
         statusLabel.center = CGPoint(x: self.view.frame.width/2, y: 50)
         statusLabel.textAlignment = .center
         statusLabel.adjustsFontSizeToFitWidth = true
-        statusLabel.textColor = UIColor.white
+        statusLabel.textColor = UIColor.blue
         statusLabel.font = .systemFont(ofSize: 20)
         self.view.addSubview(statusLabel)
     }
@@ -365,7 +366,7 @@ extension ViewController {
         initTrackerLabel.frame.size = CGSize(width: 150, height: initTrackerSwitch.frame.height)
         initTrackerLabel.frame.origin = CGPoint(x: initTrackerSwitch.frame.minX - (initTrackerLabel.frame.width + 5), y: initTrackerSwitch.frame.minY)
         initTrackerLabel.text = "InitGazeTracker"
-        initTrackerLabel.textColor = UIColor.white
+        initTrackerLabel.textColor = UIColor.blue
         initTrackerLabel.textAlignment = .center
         self.view.addSubview(initTrackerLabel)
         
@@ -387,7 +388,7 @@ extension ViewController {
         startTrackingLabel.frame.size = CGSize(width: 150, height: startTrackingSwitch.frame.height)
         startTrackingLabel.frame.origin = CGPoint(x: startTrackingSwitch.frame.minX - (startTrackingLabel.frame.width + 5), y: startTrackingSwitch.frame.minY)
         startTrackingLabel.text = "Tracking"
-        startTrackingLabel.textColor = UIColor.white
+        startTrackingLabel.textColor = UIColor.blue
         startTrackingLabel.textAlignment = .center
         self.view.addSubview(startTrackingLabel)
         
@@ -403,7 +404,7 @@ extension ViewController {
         gazeFilterLabel.frame.size = CGSize(width: 150, height: gazeFilterSwitch.frame.height)
         gazeFilterLabel.frame.origin = CGPoint(x: gazeFilterSwitch.frame.minX - (startTrackingLabel.frame.width + 5), y: gazeFilterSwitch.frame.minY)
         gazeFilterLabel.text = "Filtering"
-        gazeFilterLabel.textColor = UIColor.white
+        gazeFilterLabel.textColor = UIColor.blue
         gazeFilterLabel.textAlignment = .center
         self.view.addSubview(gazeFilterLabel)
     }
@@ -426,6 +427,7 @@ extension ViewController {
         calibrationBtn.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 + 160)
         calibrationBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchUpInside)
         calibrationBtn.setTitle("START", for: .normal)
+        calibrationBtn.setTitleColor(.blue, for: .normal)
         calibrationBtn.titleLabel?.adjustsFontSizeToFitWidth = true
         self.view.addSubview(calibrationBtn)
     }
@@ -452,7 +454,7 @@ extension ViewController {
         startCalibrationLabel.frame.size = CGSize(width: 150, height: oneRadioBtn.frame.height)
         startCalibrationLabel.frame.origin = CGPoint(x: self.view.frame.width - 180, y: self.view.frame.height/2 + 100)
         startCalibrationLabel.text = "Calibration"
-        startCalibrationLabel.textColor = UIColor.white
+        startCalibrationLabel.textColor = UIColor.blue
         startCalibrationLabel.textAlignment = .center
         self.view.addSubview(startCalibrationLabel)
         
@@ -464,10 +466,10 @@ extension ViewController {
         saveBtn.frame = CGRect(x: bottomView.frame.width/2 + 10, y: 5, width: bottomView.frame.width/2 - 20, height: bottomView.frame.height/2 - 20)
         
         loadBtn.setTitle("Load", for: .normal)
-        loadBtn.setTitleColor(.white, for: .normal)
+        loadBtn.setTitleColor(.blue, for: .normal)
         loadBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchDown)
         saveBtn.setTitle("Save", for: .normal)
-        saveBtn.setTitleColor(.white, for: .normal)
+        saveBtn.setTitleColor(.blue, for: .normal)
         saveBtn.addTarget(self, action: #selector(onClickBtn(sender:)), for: .touchDown)
         bottomView.addSubview(saveBtn)
         bottomView.addSubview(loadBtn)
