@@ -20,7 +20,7 @@ class CalibrationPointView : UILabel {
         text = "0%"
     }
     
-    func setProgress(progress : Float){
+    func setProgress(progress : Double){
         let percent = Int(progress * 100)
         DispatchQueue.main.async {
             self.text = "\(percent)%"
