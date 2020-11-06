@@ -66,7 +66,7 @@ class ViewController: UIViewController {
     }
     
     //It is an object that filters the gaze coordinate value.
-    var filterManager : OneEuroFilterManager = OneEuroFilterManager()
+    var filterManager : OneEuroFilterManager? = OneEuroFilterManager()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -152,6 +152,11 @@ class ViewController: UIViewController {
             }
         } else if sender == gazeFilterSwitch {
             self.isFiltered = sender.isOn
+            if self.isFiltered {
+                filterManager = OneEuroFilterManager()
+            }else{
+                filterManager = nil
+            }
             enableSwitch(select: sender)
         }
     }
@@ -288,8 +293,8 @@ extension ViewController : GazeDelegate {
             }else{
                 //If the filter is in use, it is displayed on the screen using the filtered value through the filter manager.
                 if gazeInfo.trackingState == .SUCCESS {
-                    if filterManager.filterValues(timestamp: Int(gazeInfo.timestamp), val:gazeInfo.x ,gazeInfo.y) {
-                        let _xy = filterManager.getFilteredValues()
+                    if filterManager != nil && filterManager!.filterValues(timestamp: gazeInfo.timestamp, val:[gazeInfo.x ,gazeInfo.y]) {
+                        let _xy = filterManager!.getFilteredValues()
                         self.showPointView(view: self.gazePointView!)
                         self.gazePointView?.moveView(x: _xy[0], y: _xy[1])
                     }
