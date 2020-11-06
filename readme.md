@@ -12,10 +12,9 @@
 
 ## Requirements
 
-- XCode 11.5
-- SeeSo.framework : 2.2.1
-- Swift: 5.2
-- It must be run on a **real iOS device. (iOS 13.0 +, iPhone 6s +)**
+- SeeSo.framework : 2.2.0
+- Swift: 5.3
+- It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
 - It must be an **internet environment.**
 
 ## How to run
@@ -75,15 +74,15 @@ To create. Deactivation again destroys the object.
 
     2-2. Stop Tracking
 
-3. Click the switch to activate it, and GazePointView uses the onFilteredGaze's coordinates. If disabled again, the OnGaze's coordinates are used.
+3. Click the switch to activate it, and GazePointView uses the OneEuroFilterManager coordinates. If disabled again, the OnGaze's GazeInfo coordinates are used.
 
     ![images/SeeSoSample3.png](images/11.png)
 
-    3-1. Filtered Gaze
+    3-1. Filtered x,y
 
     ![images/SeeSoSample2.png](images/12.png)
 
-    3-2 Raw Gaze
+    3-2 GazeInfo x,y
 
 4. The One Five button can only select one of the two. When selected, the color changes to green, meaning one-point calibration and five-point calibration, respectively. Click the start button next to start calibration.
 
