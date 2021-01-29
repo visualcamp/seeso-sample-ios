@@ -208,7 +208,7 @@ class ViewController: UIViewController {
     
     private func startCalibration(){
         print("StartCalimode : \(caliMode.description)")
-        let result = tracker?.startCalibration(mode: caliMode)
+        let result = tracker?.startCalibration(mode: caliMode, criteria: .DEFAULT)
         if let isStart = result {
             if !isStart{
                 setStatusLableText(contents: "Calibration Started failed.")
