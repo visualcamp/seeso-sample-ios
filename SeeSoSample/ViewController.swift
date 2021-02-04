@@ -208,7 +208,7 @@ class ViewController: UIViewController {
     
     private func startCalibration(){
         print("StartCalimode : \(caliMode.description)")
-        let result = tracker?.startCalibration(mode: caliMode)
+        let result = tracker?.startCalibration(mode: caliMode, criteria: .DEFAULT)
         if let isStart = result {
             if !isStart{
                 setStatusLableText(contents: "Calibration Started failed.")
@@ -284,7 +284,7 @@ extension ViewController : GazeDelegate {
         }else{
             //When no filter is used, the x,y coordinates are used directly to show the gaze coordinates.
             if !self.isFiltered {
-                if gazeInfo.trackingState == .SUCCESS {
+              if gazeInfo.trackingState == .SUCCESS || gazeInfo.trackingState == .LOW_CONFIDENCE {
                     self.showPointView(view: self.gazePointView!)
                     self.gazePointView?.moveView(x: gazeInfo.x, y: gazeInfo.y)
                 }else {
