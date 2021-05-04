@@ -1,4 +1,4 @@
-# SeeSoSample
+# SeeSo Sample iOS
 
 ### Index
 - [App Introduction](#App-Introduction)
