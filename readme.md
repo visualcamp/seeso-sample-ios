@@ -12,8 +12,8 @@
 
 ## Requirements
 
-- SeeSo.framework : 2.2.0
-- Swift: 5.3
+- SeeSo.framework : 2.4.0
+- Swift: 5.4
 - It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
 - It must be an **internet environment.**
 
