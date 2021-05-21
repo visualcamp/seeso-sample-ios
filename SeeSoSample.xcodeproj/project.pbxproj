@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6F7BD7B426564A44000D68A4 /* SeeSo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7BD7B226564A1A000D68A4 /* SeeSo.framework */; };
+		6F7BD7B526564A44000D68A4 /* SeeSo.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7BD7B226564A1A000D68A4 /* SeeSo.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D32578CB24937B7E0073F5A6 /* CalibrationPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32578CA24937B7E0073F5A6 /* CalibrationPointView.swift */; };
 		D32578D824970D6D0073F5A6 /* RadioButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32578D724970D6D0073F5A6 /* RadioButton.swift */; };
 		D33B692524931FBE00137492 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33B692424931FBE00137492 /* AppDelegate.swift */; };
@@ -25,6 +27,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				6F7BD7B526564A44000D68A4 /* SeeSo.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -32,6 +35,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6F7BD7B226564A1A000D68A4 /* SeeSo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SeeSo.framework; sourceTree = "<group>"; };
 		D32578CA24937B7E0073F5A6 /* CalibrationPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationPointView.swift; sourceTree = "<group>"; };
 		D32578D724970D6D0073F5A6 /* RadioButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioButton.swift; sourceTree = "<group>"; };
 		D33B692124931FBE00137492 /* SeeSoSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeeSoSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -50,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F7BD7B426564A44000D68A4 /* SeeSo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +88,7 @@
 		D33B692324931FBE00137492 /* SeeSoSample */ = {
 			isa = PBXGroup;
 			children = (
+				6F7BD7B226564A1A000D68A4 /* SeeSo.framework */,
 				D32578D624970D580073F5A6 /* buttons */,
 				D33B693F2493535200137492 /* views */,
 				D33B692424931FBE00137492 /* AppDelegate.swift */,
