@@ -14,7 +14,6 @@ class ViewController: UIViewController {
     
     let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
     
-    //
     var frame : Int = 0
     var lastTime : Double = 0
     enum AppState : String {
@@ -40,6 +39,23 @@ class ViewController: UIViewController {
     let gazeFilterLabel : UILabel = UILabel()
     let gazeFilterSwitch : UISwitch = UISwitch()
     
+    // User Status
+    let attentionView : UILabel =  UILabel()
+    let blinkView : UILabel = UILabel()
+    let blinkLeftView : UILabel = UILabel()
+    let blinkRightView : UILabel = UILabel()
+    let drowsinessView : UILabel = UILabel()
+
+    let statusAttentionLabel : UILabel = UILabel()
+    let attentionSwitch : UISwitch = UISwitch()
+
+    let statusBlinkLabel : UILabel = UILabel()
+    let blinkSwitch : UISwitch = UISwitch()
+
+    let statusDrowsinessLabel : UILabel = UILabel()
+    let drowsinessSwitch : UISwitch = UISwitch()
+
+    // Gaze & Calibration
     var gazePointView : GazePointView? = nil
     var caliPointView : CalibrationPointView? = nil
     
@@ -57,6 +73,10 @@ class ViewController: UIViewController {
     
     var isFiltered : Bool = false
     
+    var isUseAttention: Bool = false
+    var isUseBlink: Bool = false
+    var isUseDrowsiness: Bool = false
+
     let preview : UIView = UIView()
     
     var curState : AppState? = nil {
@@ -90,7 +110,6 @@ class ViewController: UIViewController {
             }
         }
     }
-    
     
     // Whenever the AppState, ui processing and appropriate functions are called.
     private func changeState() {
@@ -127,9 +146,6 @@ class ViewController: UIViewController {
         }
     }
     
-    
-    
-    
     private func checkAccessCamera() -> Bool {
         return AVCaptureDevice.authorizationStatus(for: .video) == .authorized
     }
@@ -139,7 +155,21 @@ class ViewController: UIViewController {
         sender.isEnabled = false
         if sender == initTrackerSwitch {
             if sender.isOn {
-                initGazeTracker()
+                let userStatusOption = UserStatusOption()
+
+                if isUseAttention {
+                    userStatusOption.useAttention()
+                }
+
+                if isUseBlink {
+                    userStatusOption.useBlink()
+                }
+
+                if isUseDrowsiness {
+                    userStatusOption.useDrowsiness()
+                }
+
+                initGazeTracker(option: userStatusOption)
             }else{
                 deinitGazeTracker()
                 sender.isEnabled = true
@@ -157,6 +187,15 @@ class ViewController: UIViewController {
             }else{
                 filterManager = nil
             }
+            enableSwitch(select: sender)
+        } else if sender == attentionSwitch {
+            self.isUseAttention = sender.isOn
+            enableSwitch(select: sender)
+        } else if sender == blinkSwitch {
+            self.isUseBlink = sender.isOn
+            enableSwitch(select: sender)
+        } else if sender == drowsinessSwitch {
+            self.isUseDrowsiness = sender.isOn
             enableSwitch(select: sender)
         }
     }
@@ -233,14 +272,15 @@ class ViewController: UIViewController {
         GazeTracker.initGazeTracker(license: licenseKey, delegate: self)
     }
     
+    private func initGazeTracker(option: UserStatusOption) {
+        GazeTracker.initGazeTracker(license: licenseKey, delegate: self, option: option)
+    }
+
     private func deinitGazeTracker(){
         GazeTracker.deinitGazeTracker(tracker: tracker)
         tracker = nil
         curState = .Idle
     }
-    
-    
-    
 }
 
 extension ViewController : InitializationDelegate {
@@ -248,7 +288,8 @@ extension ViewController : InitializationDelegate {
         enableSwitch(select: initTrackerSwitch)
         if tracker != nil {
             self.tracker = tracker
-            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil)
+            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil, userStatusDelegate: self)
+            self.tracker?.setAttentionInterval(interval: 30)
             curState = .Initailzed
         }else {
             setStatusLableText(contents: error.description)
@@ -304,7 +345,6 @@ extension ViewController : GazeDelegate {
             } 
         }
     }
-
 }
 
 extension ViewController : CalibrationDelegate {
@@ -322,7 +362,6 @@ extension ViewController : CalibrationDelegate {
                 if let result = self.tracker?.startCollectSamples() {
                     print("startCollectSamples : \(result)")
                 }
-                
             })
         }
     }
@@ -336,6 +375,21 @@ extension ViewController : CalibrationDelegate {
     }
 }
 
+extension ViewController : UserStatusDelegate {
+    func onAttension(timestampBegin: Int, timestampEnd: Int, score: Double) {
+        attentionView.text = "Attention: " + String(round(score * 10000) / 10000)
+    }
+
+    func onBlink(timestamp: Int, isBlinkLeft: Bool, isBlinkRight: Bool, isBlink: Bool, eyeOpenness: Double) {
+        blinkView.text = "Blink: " + String(isBlink)
+        blinkLeftView.text = "Blink Left: " + String(isBlinkLeft)
+        blinkRightView.text = "Blink Right: " + String(isBlinkRight)
+    }
+
+    func onDrowsiness(timestamp: Int, isDrowsiness: Bool) {
+        drowsinessView.text = "Drowsiness: " + String(isDrowsiness)
+    }
+}
 
 // UI componenents setting functions
 extension ViewController {
@@ -349,6 +403,7 @@ extension ViewController {
         initStartCalibrationUI()
         initCalibrationPointView()
         initCalibrationModeUI()
+        initUserStatusUI()
         initPreview()
     }
     
@@ -374,7 +429,6 @@ extension ViewController {
         initTrackerLabel.textColor = UIColor.blue
         initTrackerLabel.textAlignment = .center
         self.view.addSubview(initTrackerLabel)
-        
     }
     
     private func initPreview() {
@@ -396,8 +450,6 @@ extension ViewController {
         startTrackingLabel.textColor = UIColor.blue
         startTrackingLabel.textAlignment = .center
         self.view.addSubview(startTrackingLabel)
-        
-        
     }
     
     private func initGazeFilterUI(){
@@ -480,7 +532,73 @@ extension ViewController {
         bottomView.addSubview(loadBtn)
     }
     
-    
+    private func initUserStatusUI() {
+        // View UI
+        attentionView.frame.size = CGSize(width: 200, height: 50)
+        attentionView.frame.origin = CGPoint(x: 10, y: 10)
+
+        blinkView.frame.size = CGSize(width: 200, height: 50)
+        blinkView.frame.origin = CGPoint(x: 10, y: attentionView.frame.minY + 50)
+
+        blinkLeftView.frame.size = CGSize(width: 200, height: 50)
+        blinkLeftView.frame.origin = CGPoint(x: 10, y: blinkView.frame.minY + 50)
+
+        blinkRightView.frame.size = CGSize(width: 200, height: 50)
+        blinkRightView.frame.origin = CGPoint(x: 10, y: blinkLeftView.frame.minY + 50)
+
+        drowsinessView.frame.size = CGSize(width: 200, height: 50)
+        drowsinessView.frame.origin = CGPoint(x: 10, y: blinkRightView.frame.minY + 50)
+
+        attentionView.text = "Attention: NONE"
+        blinkView.text = "Blink: NONE"
+        blinkLeftView.text = "Blink Left: NONE"
+        blinkRightView.text = "Blink Right: NONE"
+        drowsinessView.text = "Drowsiness: NONE"
+
+        self.view.addSubview(attentionView)
+        self.view.addSubview(blinkView)
+        self.view.addSubview(blinkLeftView)
+        self.view.addSubview(blinkRightView)
+        self.view.addSubview(drowsinessView)
+
+        // User Status Switch
+        statusAttentionLabel.frame.size = CGSize(width: 100, height: initTrackerSwitch.frame.height)
+        statusAttentionLabel.frame.origin = CGPoint(x: 10, y: initTrackerSwitch.frame.minY)
+        statusAttentionLabel.text = "Attention"
+        statusAttentionLabel.textColor = UIColor.blue
+        statusAttentionLabel.textAlignment = .left
+        self.view.addSubview(statusAttentionLabel)
+
+        statusBlinkLabel.frame.size = CGSize(width: 100, height: initTrackerSwitch.frame.height)
+        statusBlinkLabel.frame.origin = CGPoint(x: 10, y: statusAttentionLabel.frame.maxY + 30)
+        statusBlinkLabel.text = "Blink"
+        statusBlinkLabel.textColor = UIColor.blue
+        statusBlinkLabel.textAlignment = .left
+        self.view.addSubview(statusBlinkLabel)
+
+        statusDrowsinessLabel.frame.size = CGSize(width: 100, height: initTrackerSwitch.frame.height)
+        statusDrowsinessLabel.frame.origin = CGPoint(x: 10, y: statusBlinkLabel.frame.maxY + 30)
+        statusDrowsinessLabel.text = "Drowsiness"
+        statusDrowsinessLabel.textColor = UIColor.blue
+        statusDrowsinessLabel.textAlignment = .left
+        self.view.addSubview(statusDrowsinessLabel)
+
+        attentionSwitch.frame.size = CGSize(width: 50, height: 50)
+        attentionSwitch.frame.origin = CGPoint(x: statusAttentionLabel.frame.maxX, y: initTrackerSwitch.frame.minY)
+        attentionSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(attentionSwitch)
+
+        blinkSwitch.frame.size = CGSize(width: 50, height: 50)
+        blinkSwitch.frame.origin = CGPoint(x: statusBlinkLabel.frame.maxX, y: attentionSwitch.frame.maxY + 30)
+        blinkSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(blinkSwitch)
+
+        drowsinessSwitch.frame.size = CGSize(width: 50, height: 50)
+        drowsinessSwitch.frame.origin = CGPoint(x: statusDrowsinessLabel.frame.maxX, y: blinkSwitch.frame.maxY + 30)
+        drowsinessSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(drowsinessSwitch)
+    }
+        
     private func disableSaveBtn(){
         DispatchQueue.main.async {
             self.saveBtn.isHidden = true
@@ -531,13 +649,13 @@ extension ViewController {
         }
     }
     
-    
-    
-    
     private func disableUIComponents(){
         disableSwitch(select: initTrackerSwitch)
         disableSwitch(select: startTrackingSwitch)
         disableSwitch(select: gazeFilterSwitch)
+        disableSwitch(select: attentionSwitch)
+        disableSwitch(select: blinkSwitch)
+        disableSwitch(select: drowsinessSwitch)
         disableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
@@ -547,6 +665,9 @@ extension ViewController {
         disableSwitch(select: startTrackingSwitch)
         disableSwitch(select: gazeFilterSwitch)
         disableBtn(select: calibrationBtn)
+        enableSwitch(select: attentionSwitch)
+        enableSwitch(select: blinkSwitch)
+        enableSwitch(select: drowsinessSwitch)
         resetSwitch(select: startTrackingSwitch)
         resetSwitch(select: gazeFilterSwitch)
         disableBtn(select: fiveRadioBtn)
@@ -558,6 +679,9 @@ extension ViewController {
     private func setInitializedStateUIComponents(){
         enableSwitch(select: startTrackingSwitch)
         enableSwitch(select: gazeFilterSwitch)
+        disableSwitch(select: attentionSwitch)
+        disableSwitch(select: blinkSwitch)
+        disableSwitch(select: drowsinessSwitch)
         disableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
@@ -581,9 +705,6 @@ extension ViewController {
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
     }
-
-    
-   
     
     private func hidePointView(view : UIView){
         DispatchQueue.main.async {
@@ -607,13 +728,13 @@ extension ViewController {
             }
         }
     }
+
     private func setStatusLableText(contents : String){
         DispatchQueue.main.async {
             self.statusLabel.text = contents
         }
     }
-    
-    
+
     private func resetSwitch(select :UISwitch){
         DispatchQueue.main.async {
             select.setOn(false, animated: true)
