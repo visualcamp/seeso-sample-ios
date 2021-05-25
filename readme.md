@@ -53,8 +53,19 @@
 
 ## Function description of the app
 
-1. Click on the switch to activate it. SeeSo.framework's GazeTracker
-To create. Deactivation again destroys the object.
+1. Click on the switch to activate it.
+When creating a gaze tracker, the userStatus function is used.
+
+    ![images/SeeSoSample1.png](images/15.png)
+
+    1-1. Using UserStatus
+
+    ![images/SeeSoSample2.png](images/16.png)
+
+    1-1. Not using UserStatus
+
+2. Click on the switch to activate it. SeeSo.framework's GazeTracker
+To create. Deactivation again destroys the object. After creation, the userStatus switch cannot be used.
 
     ![images/IMG_0241.png](images/7.png)
 
@@ -64,56 +75,52 @@ To create. Deactivation again destroys the object.
 
     1-2. GazeTracker deinit
 
-2. Clicking the switch to activate activates eye tracking. If it is deactivated again, the eye tracking is stopped.
+3. Clicking the switch to activate activates eye tracking. If the UserStatus switch is turned on, the UI related to UserStatus is displayed. if turned off, only the preview and GazePoint are displayed.
 
     ![images/SeeSoSample1.png](images/9.png)
 
-    2-1. Tracking
+    2-1. UserStatus ON
 
     ![images/IMG_0241%201.png](images/10.png)
 
-    2-2. Stop Tracking
+    2-2. UserStatus OFF
 
-3. Click the switch to activate it, and GazePointView uses the OneEuroFilterManager coordinates. If disabled again, the OnGaze's GazeInfo coordinates are used.
+4. Click the switch to activate it, and GazePointView uses the OneEuroFilterManager coordinates. If disabled again, the OnGaze's GazeInfo coordinates are used.
 
     ![images/SeeSoSample3.png](images/11.png)
 
-    3-1. Filtered x,y
+    4-1. Filtered x,y
 
-    ![images/SeeSoSample2.png](images/12.png)
-
-    3-2 GazeInfo x,y
-
-4. The One Five button can only select one of the two. When selected, the color changes to green, meaning one-point calibration and five-point calibration, respectively. Click the start button next to start calibration.
+5. The One Five button can only select one of the two. When selected, the color changes to green, meaning one-point calibration and five-point calibration, respectively. Click the start button next to start calibration.
 
     ![images/SeeSoSample3%201.png](images/13.png)
 
-    4-1. Five point calibration mode.
+    5-1. Five point calibration mode.
 
     ![images/SeeSoSample4.png](images/14.png)
 
-    4-2 One point calibration mode.
+    5-2 One point calibration mode.
 
-5. The top label tells you the status of each. If an error occurs, see the api documentation and deal with it.
-6. The camera preview is visible when it is in eye tracking.
-7. When calibration is complete, the save button at the bottom right appears. Click this button to save the calibration information.
+6. The top label tells you the status of each. If an error occurs, see the api documentation and deal with it.
+7. The camera preview is visible when it is in eye tracking.
+8. When calibration is complete, the save button at the bottom right appears. Click this button to save the calibration information.
 
     ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-1.png](images/7-1.png)
 
-    7-1 After calibration is complete, the save button is activated.
+    8-1 After calibration is complete, the save button is activated.
 
     ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-2.png](images/7-2.png)
 
-    7-2 When you click the save button, the label at the top changes to "Saved calibration datas", and the save button disappears.
+    8-2 When you click the save button, the label at the top changes to "Saved calibration datas", and the save button disappears.
 
-8. When in tracking state, if there is calibration data stored in the app, the load button is activated. If you click the load button, the eye tracking will proceed with the saved calibration state.
+9. When in tracking state, if there is calibration data stored in the app, the load button is activated. If you click the load button, the eye tracking will proceed with the saved calibration state.
 
     ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-1.png](images/8-1.png)
 
-    8-1 Activation of the load button when tracking status and calibration data is stored in the app.
+    9-1 Activation of the load button when tracking status and calibration data is stored in the app.
 
     ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-2.png](images/8-2.png)
 
-    8-2 When the load button is clicked, the label at the top changes to "Loaded calibration datas" and the eye tracking with previous calibration data applied starts.
+    9-2 When the load button is clicked, the label at the top changes to "Loaded calibration datas" and the eye tracking with previous calibration data applied starts.
 
-9. It cannot be loaded when in Calibrating state. Please be aware of this.
+10. It cannot be loaded when in Calibrating state. Please be aware of this.
