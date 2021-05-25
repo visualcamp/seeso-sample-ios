@@ -30,7 +30,9 @@ class UserStatusLabel : UIView {
   func aticveSubView(){
     initLabels()
     setLabelTextParameters()
-    attensionLabel.text = "attension : yet"
+    attensionLabel.text = "attension : None"
+    blinkLabel.text = "blink : None"
+    drowsinessLabel.text = "drowsiness : None"
   }
   
   
@@ -91,7 +93,7 @@ class UserStatusLabel : UIView {
 
 extension UserStatusLabel : UserStatusDelegate {
   func onAttension(timestampBegin: Int, timestampEnd: Int, score: Double) {
-    self.setLableText(attensionText: String(Int(score * 100)))
+    self.setLableText(attensionText: String(Double(round(1000 * score)/1000)))
     print("\(#function) \(timestampBegin) ~ \(timestampEnd) : \(score)")
   }
   
