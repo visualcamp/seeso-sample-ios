@@ -28,9 +28,16 @@ class ViewController: UIViewController {
     var tracker : GazeTracker? = nil
     let statusLabel : UILabel = UILabel() // This label tells you the current status.
     
+    var userStatusOn = false
+    
+    //This switch indicates whether to Initialize GazeTracker in using UserStatus.
+    let userStatusSwitchLabel : UILabel = UILabel()
+    let userStatusSwitch : UISwitch = UISwitch()
     //A switch with the ability to create or destroy Gaze Tracker objects.
     let initTrackerLabel : UILabel = UILabel()
     let initTrackerSwitch : UISwitch = UISwitch()
+    
+    var userStatusResultLabel : UserStatusLabel? 
     
     //This switch is responsible for starting or stopping gaze tracking.
     let startTrackingLabel : UILabel = UILabel()
@@ -67,7 +74,7 @@ class ViewController: UIViewController {
     
     //It is an object that filters the gaze coordinate value.
     var filterManager : OneEuroFilterManager? = OneEuroFilterManager()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         //Check if the camera is accessible.
@@ -107,9 +114,10 @@ class ViewController: UIViewController {
                     self.setIdleStateUIComponents()
                     self.disableLoadBtn()
                     self.disableSaveBtn()
+                    self.enableSwitch(select: self.userStatusSwitch)
                 case .Initailzed:
                     self.setInitializedStateUIComponents()
-                     self.tracker?.removeCameraPreview()
+                    self.tracker?.removeCameraPreview()
                     self.disableLoadBtn()
                     self.disableSaveBtn()
                 case .Tracking:
@@ -139,6 +147,7 @@ class ViewController: UIViewController {
         sender.isEnabled = false
         if sender == initTrackerSwitch {
             if sender.isOn {
+                disableSwitch(select: userStatusSwitch)
                 initGazeTracker()
             }else{
                 deinitGazeTracker()
@@ -158,6 +167,9 @@ class ViewController: UIViewController {
                 filterManager = nil
             }
             enableSwitch(select: sender)
+        } else if sender == userStatusSwitch {
+            self.userStatusOn = sender.isOn
+            sender.isEnabled = true
         }
     }
     
@@ -230,13 +242,18 @@ class ViewController: UIViewController {
     }
     
     private func initGazeTracker() {
-        GazeTracker.initGazeTracker(license: licenseKey, delegate: self)
+        let options = UserStatusOption()
+        if userStatusOn {
+            options.useAll()
+        }
+        GazeTracker.initGazeTracker(license: licenseKey, delegate: self, option: options)
     }
     
     private func deinitGazeTracker(){
         GazeTracker.deinitGazeTracker(tracker: tracker)
         tracker = nil
         curState = .Idle
+        hideUserStatusLabel()
     }
     
     
@@ -248,7 +265,12 @@ extension ViewController : InitializationDelegate {
         enableSwitch(select: initTrackerSwitch)
         if tracker != nil {
             self.tracker = tracker
-            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil)
+            let userStatusDelegate : UserStatusDelegate? = userStatusOn ? userStatusResultLabel : nil
+            if userStatusOn {
+                // interval's default is 30s, setting 10s for demo
+                self.tracker?.setAttentionInterval(interval: 10)
+            }
+            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil, userStatusDelegate: userStatusDelegate)
             curState = .Initailzed
         }else {
             setStatusLableText(contents: error.description)
@@ -262,6 +284,9 @@ extension ViewController : StatusDelegate {
     func onStarted() {
         curState = .Tracking
         self.tracker?.setCameraPreview(preview: self.preview)
+        if userStatusOn {
+            showUserStatusLabel()
+        }
     }
     
     func onStopped(error: StatusError) {
@@ -284,7 +309,7 @@ extension ViewController : GazeDelegate {
         }else{
             //When no filter is used, the x,y coordinates are used directly to show the gaze coordinates.
             if !self.isFiltered {
-              if gazeInfo.trackingState == .SUCCESS || gazeInfo.trackingState == .LOW_CONFIDENCE {
+                if gazeInfo.trackingState == .SUCCESS || gazeInfo.trackingState == .LOW_CONFIDENCE {
                     self.showPointView(view: self.gazePointView!)
                     self.gazePointView?.moveView(x: gazeInfo.x, y: gazeInfo.y)
                 }else {
@@ -304,7 +329,7 @@ extension ViewController : GazeDelegate {
             } 
         }
     }
-
+    
 }
 
 extension ViewController : CalibrationDelegate {
@@ -342,6 +367,7 @@ extension ViewController {
     
     private func initViewComponents(){
         initStatusLabel()
+        initModeUI()
         initInitTrackerUI()
         initStartTrackingUI()
         initGazePointView()
@@ -350,6 +376,7 @@ extension ViewController {
         initCalibrationPointView()
         initCalibrationModeUI()
         initPreview()
+        initUserStatusLabel()
     }
     
     private func initStatusLabel(){
@@ -360,6 +387,20 @@ extension ViewController {
         statusLabel.textColor = UIColor.blue
         statusLabel.font = .systemFont(ofSize: 20)
         self.view.addSubview(statusLabel)
+    }
+    
+    private func initModeUI(){
+        userStatusSwitch.frame.size = CGSize(width: 50, height: 50)
+        userStatusSwitch.frame.origin = CGPoint(x: self.view.frame.width - 60, y: self.view.frame.height/2 - 140)
+        userStatusSwitch.addTarget(self, action: #selector(onClickSwitch(sender:)), for: .valueChanged)
+        self.view.addSubview(userStatusSwitch)
+        
+        userStatusSwitchLabel.frame.size = CGSize(width: 150, height: userStatusSwitch.frame.height)
+        userStatusSwitchLabel.frame.origin = CGPoint(x: userStatusSwitch.frame.minX - (userStatusSwitchLabel.frame.width + 5), y: userStatusSwitch.frame.minY)
+        userStatusSwitchLabel.text = "UserStatus"
+        userStatusSwitchLabel.textColor = UIColor.blue
+        userStatusSwitchLabel.textAlignment = .center
+        self.view.addSubview(userStatusSwitchLabel)
     }
     
     private func initInitTrackerUI(){
@@ -480,6 +521,16 @@ extension ViewController {
         bottomView.addSubview(loadBtn)
     }
     
+    private func initUserStatusLabel(){
+        userStatusResultLabel = UserStatusLabel(frame: CGRect(x: 15, y: self.preview.frame.minY, width: self.preview.frame.minX - 30, height: self.preview.frame.height))
+        self.view.addSubview(userStatusResultLabel!)
+        self.userStatusResultLabel!.isHidden = true
+        DispatchQueue.main.async {
+            self.userStatusResultLabel?.layoutIfNeeded()
+        }
+        self.view.bringSubviewToFront(gazePointView!)
+    }
+    
     
     private func disableSaveBtn(){
         DispatchQueue.main.async {
@@ -581,9 +632,19 @@ extension ViewController {
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
     }
-
     
-   
+    private func showUserStatusLabel(){
+        DispatchQueue.main.async {
+            self.userStatusResultLabel?.isHidden = false
+        }
+    }
+    
+    private func hideUserStatusLabel(){
+        DispatchQueue.main.async {
+            self.userStatusResultLabel?.isHidden = true
+        }
+    }
+    
     
     private func hidePointView(view : UIView){
         DispatchQueue.main.async {
