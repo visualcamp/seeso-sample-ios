@@ -56,11 +56,11 @@
 1. Click on the switch to activate it.
 When creating a gaze tracker, the userStatus function is used.
 
-    ![images/SeeSoSample1.png](images/15.png)
+    ![images/SeeSoSample1.png](images/15.PNG)
 
     1-1. Using UserStatus
 
-    ![images/SeeSoSample2.png](images/16.png)
+    ![images/SeeSoSample2.png](images/16.PNG)
 
     1-1. Not using UserStatus
 
