@@ -1,126 +1,67 @@
-# SeeSo Sample iOS
+<p align="center">
+    <img src="/image/seeso_logo.png">
+</p>
+<div align="center">
+    <h1>SeeSo iOS Sample</h1>
+    <a href="https://github.com/visualcamp/seeso-sample-ios/releases" alt="release">
+        <img src="https://img.shields.io/badge/version-2.4.0-blue" />
+    </a>
+</div>
 
-### Index
-- [App Introduction](#App-Introduction)
-- [Requirements](#Requirements)
-- [How to run](#How-to-run)
-- [Function description of the app](#Function-description-of-the-app)
+## SeeSo
+SeeSo is an AI based eye tracking SDK which uses image from RGB camera to track where the user is looking.
+Extra hardware is not required and you can start your development for free.
+In 2021, SeeSo was recognized for its innovative technology and won GLOMO Award for Best Mobile Innovation for Connected Living!
+1. Supports multi-platform (iOS/Android/Unity/Windows/Web-JS)
+2. Has simple and quick calibration (1-5 points)
+3. Has high accuracy and robustness compared to its competitors.
 
-## App Introduction
-
- This app is designed to help you understand how GazeTracker works. This is because the functions available for each state are activated.
+## Documentation
+* Overview: https://docs.seeso.io/docs/seeso-sdk-overview/
+* Quick Start: https://docs.seeso.io/docs/ios-quick-start/
+* API(Swift): https://docs.seeso.io/docs/ios-api-docs/
+* API(Objective-C): https://docs.seeso.io/docs/objc-api-docs/
 
 ## Requirements
+* SeeSo.framework : 2.4.0
+* Swift: 5.4
+* It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
+* It must be an **internet environment.**
+* [SeeSo iOS SDK](https://console.seeso.io/)
+* Must be issued a license key in [SeeSo Console](https://console.seeso.io/)
 
-- SeeSo.framework : 2.4.0
-- Swift: 5.4
-- It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
-- It must be an **internet environment.**
+## Setting License Key
+* Get a license key from https://console.seeso.io and copy your key to [`ViewController.swift`](SeeSoSample/ViewController.swift)
+   ```
+   let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
+   ```
 
 ## How to run
-
 1. Clone or download this project.
 2. Add SeeSo.framework to the project as shown below. (At this time, "copy items if needed" should be checked.)
 
-    ![images/_2020-06-11__3.32.25.png](images/1.png)
+    ![images/_2020-06-11__3.32.25.png](image/ios/1.png)
 
     2-1 
 
-    ![images/_2020-06-11__3.32.39.png](images/2.png)
+    ![images/_2020-06-11__3.32.39.png](image/ios/2.png)
 
     2-2
 
-    ![images/_2020-06-11__3.33.44.png](images/3.png)
+    ![images/_2020-06-11__3.33.44.png](image/ios/3.png)
 
     2-3
 
 3. Now change the SeeSo.framework to sign & embed as shown below.
 
-    ![images/_2020-06-11__3.33.21.png](images/4.png)
+    ![images/_2020-06-11__3.33.21.png](image/ios/4.png)
 
     3-1
 
 4. Sign in with your developer ID in the Signing & Capabilities tab.
-5. Insert your own development key in the licenseKey into the "ViewController.swift".
+5. Allow camera access.
 
-    ![images/_2020-06-15__5.40.07.png](images/5.png)
-
-    5-1
-
-6. Allow camera access.
-
-    ![images/IMG_0239.png](images/6.png)
-
-## Function description of the app
-
-1. Click on the switch to activate it.
-When creating a gaze tracker, the userStatus function is used.
-
-    ![images/SeeSoSample1.png](images/15.PNG)
-
-    1-1. Using UserStatus
-
-    ![images/SeeSoSample2.png](images/16.PNG)
-
-    1-1. Not using UserStatus
-
-2. Click on the switch to activate it. SeeSo.framework's GazeTracker
-To create. Deactivation again destroys the object. After creation, the userStatus switch cannot be used.
-
-    ![images/IMG_0241.png](images/7.png)
-
-    1-1. GazeTracker init.
-
-    ![images/IMG_0240.png](images/8.png)
-
-    1-2. GazeTracker deinit
-
-3. Clicking the switch to activate activates eye tracking. If the UserStatus switch is turned on, the UI related to UserStatus is displayed. if turned off, only the preview and GazePoint are displayed.
-
-    ![images/SeeSoSample1.png](images/9.png)
-
-    2-1. UserStatus ON
-
-    ![images/IMG_0241%201.png](images/10.png)
-
-    2-2. UserStatus OFF
-
-4. Click the switch to activate it, and GazePointView uses the OneEuroFilterManager coordinates. If disabled again, the OnGaze's GazeInfo coordinates are used.
-
-    ![images/SeeSoSample3.png](images/11.png)
-
-    4-1. Filtered x,y
-
-5. The One Five button can only select one of the two. When selected, the color changes to green, meaning one-point calibration and five-point calibration, respectively. Click the start button next to start calibration.
-
-    ![images/SeeSoSample3%201.png](images/13.png)
-
-    5-1. Five point calibration mode.
-
-    ![images/SeeSoSample4.png](images/14.png)
-
-    5-2 One point calibration mode.
-
-6. The top label tells you the status of each. If an error occurs, see the api documentation and deal with it.
-7. The camera preview is visible when it is in eye tracking.
-8. When calibration is complete, the save button at the bottom right appears. Click this button to save the calibration information.
-
-    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-1.png](images/7-1.png)
-
-    8-1 After calibration is complete, the save button is activated.
-
-    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/7-2.png](images/7-2.png)
-
-    8-2 When you click the save button, the label at the top changes to "Saved calibration datas", and the save button disappears.
-
-9. When in tracking state, if there is calibration data stored in the app, the load button is activated. If you click the load button, the eye tracking will proceed with the saved calibration state.
-
-    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-1.png](images/8-1.png)
-
-    9-1 Activation of the load button when tracking status and calibration data is stored in the app.
-
-    ![SeeSoSample%204f84e4332f954953b6e80a59305dcb3c/8-2.png](images/8-2.png)
-
-    9-2 When the load button is clicked, the label at the top changes to "Loaded calibration datas" and the eye tracking with previous calibration data applied starts.
-
-10. It cannot be loaded when in Calibrating state. Please be aware of this.
+    ![images/IMG_0239.png](image/ios/6.png)
+      
+## Contact Us
+If you have any problems, feel free to [contact us](https://seeso.io/Contact-Us) 
