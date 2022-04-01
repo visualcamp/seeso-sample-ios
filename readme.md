@@ -4,7 +4,7 @@
 <div align="center">
     <h1>SeeSo iOS Sample</h1>
     <a href="https://github.com/visualcamp/seeso-sample-ios/releases" alt="release">
-        <img src="https://img.shields.io/badge/version-2.4.0-blue" />
+        <img src="https://img.shields.io/badge/version-2.4.4-blue" />
     </a>
 </div>
 
@@ -17,21 +17,20 @@ In 2021, SeeSo was recognized for its innovative technology and won GLOMO Award 
 3. Has high accuracy and robustness compared to its competitors.
 
 ## Documentation
-* Overview: https://docs.seeso.io/docs/seeso-sdk-overview/
-* Quick Start: https://docs.seeso.io/docs/ios-quick-start/
-* API(Swift): https://docs.seeso.io/docs/ios-api-docs/
-* API(Objective-C): https://docs.seeso.io/docs/objc-api-docs/
+* Overview: https://docs.seeso.io/nonversioning/document/seeso-sdk-overview
+* Quick Start: https://docs.seeso.io/nonversioning/quick-start/ios-quick-start
+* API: https://docs.seeso.io/docs/api/ios-api-docs
 
 ## Requirements
-* SeeSo.framework : 2.4.3
+* SeeSo.framework : 2.4.4
 * Swift: 5.5
 * It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
 * It must be an **internet environment.**
-* [SeeSo iOS SDK](https://console.seeso.io/)
-* Must be issued a license key in [SeeSo Console](https://console.seeso.io/)
+* [SeeSo iOS SDK](https://manage.seeso.io/)
+* Must be issued a license key in [SeeSo Manage](https://manage.seeso.io/)
 
 ## Setting License Key
-* Get a license key from https://console.seeso.io and copy your key to [`ViewController.swift`](SeeSoSample/ViewController.swift#L15)
+* Get a license key from https://manage.seeso.io and copy your key to [`ViewController.swift`](SeeSoSample/ViewController.swift#L15)
    ```
    let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
    ```
