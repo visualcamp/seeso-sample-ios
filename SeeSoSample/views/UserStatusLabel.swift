@@ -10,7 +10,7 @@ import UIKit
 import SeeSo
 
 class UserStatusLabel : UIView {
-  let attensionLabel : UILabel = UILabel()
+  let attentionLabel : UILabel = UILabel()
   let blinkLabel : UILabel = UILabel()
   let drowsinessLabel : UILabel = UILabel()
   
@@ -30,21 +30,21 @@ class UserStatusLabel : UIView {
   func aticveSubView(){
     initLabels()
     setLabelTextParameters()
-    attensionLabel.text = "attension : None"
+    attentionLabel.text = "attention : None"
     blinkLabel.text = "blink : None"
     drowsinessLabel.text = "drowsiness : None"
   }
   
   
   func initLabels(){
-    self.addSubview(attensionLabel)
+    self.addSubview(attentionLabel)
     self.addSubview(blinkLabel)
     self.addSubview(drowsinessLabel)
-    attensionLabel.translatesAutoresizingMaskIntoConstraints = false
-    let attentionConstraints : [NSLayoutConstraint] =  [attensionLabel.widthAnchor.constraint(equalTo: self.widthAnchor), attensionLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.33), attensionLabel.topAnchor.constraint(equalTo: self.topAnchor), attensionLabel.leftAnchor.constraint(equalTo: self.leftAnchor)]
+    attentionLabel.translatesAutoresizingMaskIntoConstraints = false
+    let attentionConstraints : [NSLayoutConstraint] =  [attentionLabel.widthAnchor.constraint(equalTo: self.widthAnchor), attentionLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.33), attentionLabel.topAnchor.constraint(equalTo: self.topAnchor), attentionLabel.leftAnchor.constraint(equalTo: self.leftAnchor)]
     
     blinkLabel.translatesAutoresizingMaskIntoConstraints = false
-    let blinkConstraints : [NSLayoutConstraint] =  [blinkLabel.widthAnchor.constraint(equalTo: self.widthAnchor), blinkLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.33), blinkLabel.topAnchor.constraint(equalTo: self.attensionLabel.bottomAnchor), blinkLabel.leftAnchor.constraint(equalTo: self.leftAnchor)]
+    let blinkConstraints : [NSLayoutConstraint] =  [blinkLabel.widthAnchor.constraint(equalTo: self.widthAnchor), blinkLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.33), blinkLabel.topAnchor.constraint(equalTo: self.attentionLabel.bottomAnchor), blinkLabel.leftAnchor.constraint(equalTo: self.leftAnchor)]
     
     drowsinessLabel.translatesAutoresizingMaskIntoConstraints = false
     let drowsinessConstraints : [NSLayoutConstraint] =  [drowsinessLabel.widthAnchor.constraint(equalTo: self.widthAnchor), drowsinessLabel.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.33), drowsinessLabel.topAnchor.constraint(equalTo: self.blinkLabel.bottomAnchor), drowsinessLabel.leftAnchor.constraint(equalTo: self.leftAnchor)]
@@ -56,7 +56,7 @@ class UserStatusLabel : UIView {
   }
   
   func setLabelTextParameters(){
-    for label in [attensionLabel, blinkLabel, drowsinessLabel] {
+    for label in [attentionLabel, blinkLabel, drowsinessLabel] {
       label.textAlignment = .center
       label.textColor = .blue
       label.adjustsFontSizeToFitWidth = true
@@ -65,10 +65,10 @@ class UserStatusLabel : UIView {
   }
   
   
-  func setLableText(attensionText : String? = nil, blinkText : String? = nil, drowsinessText : String? = nil) {
-    if let attension = attensionText {
+  func setLableText(attentionText : String? = nil, blinkText : String? = nil, drowsinessText : String? = nil) {
+    if let attention = attentionText {
       DispatchQueue.main.async {
-        self.attensionLabel.text = "attension : \(attension)"
+        self.attentionLabel.text = "attention : \(attention)"
       }
     }
     
@@ -92,8 +92,9 @@ class UserStatusLabel : UIView {
 }
 
 extension UserStatusLabel : UserStatusDelegate {
-  func onAttension(timestampBegin: Int, timestampEnd: Int, score: Double) {
-    self.setLableText(attensionText: String(Double(round(1000 * score)/1000)))
+  
+  func onAttention(timestampBegin: Int, timestampEnd: Int, score: Double) {
+    self.setLableText(attentionText: String(Double(round(1000 * score)/1000)))
     print("\(#function) \(timestampBegin) ~ \(timestampEnd) : \(score)")
   }
   
