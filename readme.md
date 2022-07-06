@@ -39,7 +39,7 @@ In 2021, SeeSo was recognized for its innovative technology and won GLOMO Award 
 1. Clone or download this project.
 2. Add SeeSo.framework to the project as shown below. (At this time, "copy items if needed" should be checked.)
 
-    ![images/_2020-06-11__3.32.25.png](image/ios/1.png)
+    ![images/_2020-06-11__3.32.25.png](image/ios/1.jpg)
 
     2-1 
 
