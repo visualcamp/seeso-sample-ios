@@ -31,7 +31,7 @@ In 2021, SeeSo was recognized for its innovative technology and won GLOMO Award 
 
 ## Setting License Key
 * Get a license key from https://manage.seeso.io and copy your key to [`ViewController.swift`](SeeSoSample/ViewController.swift#L15)
-   ```
+   ```swift
    let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
    ```
 
