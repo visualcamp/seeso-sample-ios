@@ -22,7 +22,7 @@ In 2021, SeeSo was recognized for its innovative technology and won GLOMO Award 
 * API: https://docs.seeso.io/docs/api/ios-api-docs
 
 ## Requirements
-* SeeSo.framework : 2.4.4
+* SeeSo.framework : 2.6.0
 * Swift: 5.5
 * It must be run on a **real iOS device. (iOS 11.0 +, iPhone 6s +)**
 * It must be an **internet environment.**

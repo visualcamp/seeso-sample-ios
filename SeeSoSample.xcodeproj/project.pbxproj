@@ -17,6 +17,8 @@
 		D33B693124931FC200137492 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D33B692F24931FC200137492 /* LaunchScreen.storyboard */; };
 		D33B693E2493532B00137492 /* GazePointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33B693D2493532B00137492 /* GazePointView.swift */; };
 		D3F882E6265C923E0013B273 /* UserStatusLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3F882E5265C923E0013B273 /* UserStatusLabel.swift */; };
+		F90709EB28DB00DD007BAB7A /* SeeSo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F90709EA28DB00DD007BAB7A /* SeeSo.framework */; };
+		F90709EC28DB00DD007BAB7A /* SeeSo.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F90709EA28DB00DD007BAB7A /* SeeSo.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,6 +28,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				F90709EC28DB00DD007BAB7A /* SeeSo.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -45,6 +48,7 @@
 		D33B693224931FC200137492 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D33B693D2493532B00137492 /* GazePointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GazePointView.swift; sourceTree = "<group>"; };
 		D3F882E5265C923E0013B273 /* UserStatusLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserStatusLabel.swift; sourceTree = "<group>"; };
+		F90709EA28DB00DD007BAB7A /* SeeSo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SeeSo.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F90709EB28DB00DD007BAB7A /* SeeSo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +76,7 @@
 			children = (
 				D33B692324931FBE00137492 /* SeeSoSample */,
 				D33B692224931FBE00137492 /* Products */,
+				F90709E928DB00DD007BAB7A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -106,6 +112,14 @@
 				D3F882E5265C923E0013B273 /* UserStatusLabel.swift */,
 			);
 			path = views;
+			sourceTree = "<group>";
+		};
+		F90709E928DB00DD007BAB7A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F90709EA28DB00DD007BAB7A /* SeeSo.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

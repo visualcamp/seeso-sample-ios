@@ -3,7 +3,7 @@
 //  SeeSoSample
 //
 //  Created by VisualCamp on 2020/06/15.
-//  Copyright © 2020 VisaulCamp. All rights reserved.
+//  Copyright © 2020 VisualCamp. All rights reserved.
 //
 
 import UIKit

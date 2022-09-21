@@ -3,7 +3,7 @@
 //  SeeSoSample
 //
 //  Created by david on 2021/05/25.
-//  Copyright © 2021 VisaulCamp. All rights reserved.
+//  Copyright © 2021 VisualCamp. All rights reserved.
 //
 
 import UIKit
@@ -24,10 +24,10 @@ class UserStatusLabel : UIView {
   
   override func layoutIfNeeded() {
     super.layoutIfNeeded()
-    aticveSubView()
+    activateSubView()
   }
   
-  func aticveSubView(){
+  func activateSubView(){
     initLabels()
     setLabelTextParameters()
     attentionLabel.text = "attention : None"
@@ -65,7 +65,7 @@ class UserStatusLabel : UIView {
   }
   
   
-  func setLableText(attentionText : String? = nil, blinkText : String? = nil, drowsinessText : String? = nil) {
+  func setLabelText(attentionText : String? = nil, blinkText : String? = nil, drowsinessText : String? = nil) {
     if let attention = attentionText {
       DispatchQueue.main.async {
         self.attentionLabel.text = "attention : \(attention)"
@@ -94,7 +94,7 @@ class UserStatusLabel : UIView {
 extension UserStatusLabel : UserStatusDelegate {
   
   func onAttention(timestampBegin: Int, timestampEnd: Int, score: Double) {
-    self.setLableText(attentionText: String(Double(round(1000 * score)/1000)))
+    self.setLabelText(attentionText: String(Double(round(1000 * score)/1000)))
     print("\(#function) \(timestampBegin) ~ \(timestampEnd) : \(score)")
   }
   
@@ -102,14 +102,14 @@ extension UserStatusLabel : UserStatusDelegate {
     print("\(#function) \(timestamp) -> isBlinkLeft : \(isBlinkLeft), isBlinkRight : \(isBlinkRight) , isBlink : \(isBlink)")
     
     if lastBlink != isBlink || self.blinkLabel.text == nil || self.blinkLabel.text!.count <= 0 {
-      self.setLableText(blinkText: String(isBlink))
+      self.setLabelText(blinkText: String(isBlink))
     }
     lastBlink = isBlink
   }
   
   func onDrowsiness(timestamp: Int, isDrowsiness: Bool) {
     if lastDrowsiness != isDrowsiness || self.drowsinessLabel.text == nil || self.drowsinessLabel.text!.count <= 0 {
-      self.setLableText(drowsinessText: String(isDrowsiness))
+      self.setLabelText(drowsinessText: String(isDrowsiness))
     }
     lastDrowsiness = isDrowsiness
   }

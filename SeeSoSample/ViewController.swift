@@ -3,7 +3,7 @@
 //  SeeSoSample
 //
 //  Created by VisualCamp on 2020/06/12.
-//  Copyright © 2020 VisaulCamp. All rights reserved.
+//  Copyright © 2020 VisualCamp. All rights reserved.
 //
 
 import UIKit
@@ -20,7 +20,7 @@ class ViewController: UIViewController {
     enum AppState : String {
         case Disable = "Disable" // User denied access to the camera.
         case Idle = "Idle" // User has allowed access to the camera.
-        case Initailzed = "Initalized" // GazeTracker has been successfully created.
+        case Initialized = "Initialized" // GazeTracker has been successfully created.
         case Tracking = "Tracking" // Gaze Tracking state.
         case Calibrating = "Calibrating" // It is being calibrated.
     }
@@ -37,7 +37,7 @@ class ViewController: UIViewController {
     let initTrackerLabel : UILabel = UILabel()
     let initTrackerSwitch : UISwitch = UISwitch()
     
-    var userStatusResultLabel : UserStatusLabel? 
+    var userStatusResultLabel : UserStatusLabel?
     
     //This switch is responsible for starting or stopping gaze tracking.
     let startTrackingLabel : UILabel = UILabel()
@@ -115,7 +115,7 @@ class ViewController: UIViewController {
                     self.disableLoadBtn()
                     self.disableSaveBtn()
                     self.enableSwitch(select: self.userStatusSwitch)
-                case .Initailzed:
+                case .Initialized:
                     self.setInitializedStateUIComponents()
                     self.tracker?.removeCameraPreview()
                     self.disableLoadBtn()
@@ -130,7 +130,7 @@ class ViewController: UIViewController {
                     self.disableLoadBtn()
                     self.setCalibratingUIComponents()
                 }
-                self.setStatusLableText(contents: state.rawValue)
+                self.setStatusLabelText(contents: state.rawValue)
             }
         }
     }
@@ -223,7 +223,7 @@ class ViewController: UIViewController {
         let result = tracker?.startCalibration(mode: caliMode, criteria: .DEFAULT)
         if let isStart = result {
             if !isStart{
-                setStatusLableText(contents: "Calibration Started failed.")
+                setStatusLabelText(contents: "Calibration Started failed.")
             }
         }
     }
@@ -270,10 +270,15 @@ extension ViewController : InitializationDelegate {
                 // interval's default is 30s, setting 10s for demo
                 self.tracker?.setAttentionInterval(interval: 10)
             }
-            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil, userStatusDelegate: userStatusDelegate)
-            curState = .Initailzed
-        }else {
-            setStatusLableText(contents: error.description)
+            self.tracker?.setDelegates(statusDelegate: self,
+                                       gazeDelegate: self,
+                                       calibrationDelegate: self,
+                                       userStatusDelegate: userStatusDelegate,
+                                       imageDelegate: nil,
+                                       faceDelegate: self)
+            curState = .Initialized
+        } else {
+            setStatusLabelText(contents: error.description)
             resetSwitch(select: initTrackerSwitch)
             self.enableSwitch(select: initTrackerSwitch)
         }
@@ -290,12 +295,12 @@ extension ViewController : StatusDelegate {
     }
     
     func onStopped(error: StatusError) {
-        setStatusLableText(contents: "onStopped : \(error.description)")
+        setStatusLabelText(contents: "onStopped : \(error.description)")
         resetSwitch(select: startTrackingSwitch)
         self.enableSwitch(select: startTrackingSwitch)
         self.tracker?.removeCameraPreview()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-            self.curState = .Initailzed
+            self.curState = .Initialized
         })
     }
 }
@@ -326,7 +331,7 @@ extension ViewController : GazeDelegate {
                 }else {
                     self.hidePointView(view: self.gazePointView!)
                 }
-            } 
+            }
         }
     }
     
@@ -358,6 +363,11 @@ extension ViewController : CalibrationDelegate {
         changeState()
         self.calibrationData = calibrationData
         enableSaveBtn()
+    }
+}
+extension ViewController: FaceDelegate {
+    func onFace(faceInfo: FaceInfo) {
+        
     }
 }
 
@@ -663,12 +673,12 @@ extension ViewController {
                         if let result = self.tracker?.startCollectSamples() {
                             print("startCollectSamples : \(result)")
                         }
-                    })              
+                    })
                 }
             }
         }
     }
-    private func setStatusLableText(contents : String){
+    private func setStatusLabelText(contents : String){
         DispatchQueue.main.async {
             self.statusLabel.text = contents
         }
