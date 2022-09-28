@@ -3,7 +3,7 @@
 //  SeeSoSample
 //
 //  Created by VisualCamp on 2020/06/12.
-//  Copyright © 2020 VisaulCamp. All rights reserved.
+//  Copyright © 2020 VisualCamp. All rights reserved.
 //
 
 import UIKit
@@ -46,6 +46,4 @@ class GazePointView : UIView {
             self.horizontalLine.frame.origin.y = centerPoint.y
         }
     }
-    
-    
 }

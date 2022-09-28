@@ -3,7 +3,7 @@
 //  SeeSoSample
 //
 //  Created by VisualCamp on 2020/06/12.
-//  Copyright © 2020 VisaulCamp. All rights reserved.
+//  Copyright © 2020 VisualCamp. All rights reserved.
 //
 
 import UIKit
@@ -20,7 +20,7 @@ class ViewController: UIViewController {
     enum AppState : String {
         case Disable = "Disable" // User denied access to the camera.
         case Idle = "Idle" // User has allowed access to the camera.
-        case Initailzed = "Initalized" // GazeTracker has been successfully created.
+        case Initialized = "Initialized" // GazeTracker has been successfully created.
         case Tracking = "Tracking" // Gaze Tracking state.
         case Calibrating = "Calibrating" // It is being calibrated.
     }
@@ -37,7 +37,7 @@ class ViewController: UIViewController {
     let initTrackerLabel : UILabel = UILabel()
     let initTrackerSwitch : UISwitch = UISwitch()
     
-    var userStatusResultLabel : UserStatusLabel? 
+    var userStatusResultLabel : UserStatusLabel?
     
     //This switch is responsible for starting or stopping gaze tracking.
     let startTrackingLabel : UILabel = UILabel()
@@ -65,6 +65,13 @@ class ViewController: UIViewController {
     var isFiltered : Bool = false
     
     let preview : UIView = UIView()
+    
+    // Face Data View
+    let faceView: UIView = UIView()
+    let faceDataView: UIView = UIView()
+    let faceScoreLabel = UILabel()
+    let faceDistanceLabel = UILabel()
+
     
     var curState : AppState? = nil {
         didSet {
@@ -115,7 +122,7 @@ class ViewController: UIViewController {
                     self.disableLoadBtn()
                     self.disableSaveBtn()
                     self.enableSwitch(select: self.userStatusSwitch)
-                case .Initailzed:
+                case .Initialized:
                     self.setInitializedStateUIComponents()
                     self.tracker?.removeCameraPreview()
                     self.disableLoadBtn()
@@ -130,7 +137,7 @@ class ViewController: UIViewController {
                     self.disableLoadBtn()
                     self.setCalibratingUIComponents()
                 }
-                self.setStatusLableText(contents: state.rawValue)
+                self.setStatusLabelText(contents: state.rawValue)
             }
         }
     }
@@ -223,7 +230,7 @@ class ViewController: UIViewController {
         let result = tracker?.startCalibration(mode: caliMode, criteria: .DEFAULT)
         if let isStart = result {
             if !isStart{
-                setStatusLableText(contents: "Calibration Started failed.")
+                setStatusLabelText(contents: "Calibration Started failed.")
             }
         }
     }
@@ -270,10 +277,15 @@ extension ViewController : InitializationDelegate {
                 // interval's default is 30s, setting 10s for demo
                 self.tracker?.setAttentionInterval(interval: 10)
             }
-            self.tracker?.setDelegates(statusDelegate: self, gazeDelegate: self, calibrationDelegate: self, imageDelegate: nil, userStatusDelegate: userStatusDelegate)
-            curState = .Initailzed
-        }else {
-            setStatusLableText(contents: error.description)
+            self.tracker?.setDelegates(statusDelegate: self,
+                                       gazeDelegate: self,
+                                       calibrationDelegate: self,
+                                       userStatusDelegate: userStatusDelegate,
+                                       imageDelegate: nil,
+                                       faceDelegate: self)
+            curState = .Initialized
+        } else {
+            setStatusLabelText(contents: error.description)
             resetSwitch(select: initTrackerSwitch)
             self.enableSwitch(select: initTrackerSwitch)
         }
@@ -290,12 +302,12 @@ extension ViewController : StatusDelegate {
     }
     
     func onStopped(error: StatusError) {
-        setStatusLableText(contents: "onStopped : \(error.description)")
+        setStatusLabelText(contents: "onStopped : \(error.description)")
         resetSwitch(select: startTrackingSwitch)
         self.enableSwitch(select: startTrackingSwitch)
         self.tracker?.removeCameraPreview()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-            self.curState = .Initailzed
+            self.curState = .Initialized
         })
     }
 }
@@ -326,7 +338,7 @@ extension ViewController : GazeDelegate {
                 }else {
                     self.hidePointView(view: self.gazePointView!)
                 }
-            } 
+            }
         }
     }
     
@@ -360,6 +372,19 @@ extension ViewController : CalibrationDelegate {
         enableSaveBtn()
     }
 }
+extension ViewController: FaceDelegate {
+    func onFace(faceInfo: FaceInfo) {
+        var rotationWithPerspective = CATransform3DIdentity
+        rotationWithPerspective.m34 = 1.0/500.0
+        let radians = Double.pi / 2
+        rotationWithPerspective = CATransform3DRotate(rotationWithPerspective, radians * faceInfo.yaw, 0.5, 0, 0);
+        rotationWithPerspective = CATransform3DRotate(rotationWithPerspective, radians * faceInfo.pitch, 0, 0.5, 0);
+        faceView.layer.transform = rotationWithPerspective
+        
+        faceScoreLabel.text = String(NSString(format: "Face Score\n%.4f", faceInfo.score))
+        faceDistanceLabel.text = String(NSString(format: "Face Distance\n%.4f", faceInfo.centerXYZ.z))
+    }
+}
 
 
 // UI componenents setting functions
@@ -376,6 +401,7 @@ extension ViewController {
         initCalibrationPointView()
         initCalibrationModeUI()
         initPreview()
+        initFaceView()
         initUserStatusLabel()
     }
     
@@ -423,6 +449,107 @@ extension ViewController {
         preview.center = CGPoint(x: self.view.frame.width/2, y: 160)
         preview.alpha = 0.7
         self.view.addSubview(preview)
+    }
+    private func initFaceView() {
+        faceView.frame = preview.frame
+        faceView.layer.borderColor = UIColor.blue.cgColor
+        faceView.layer.borderWidth = 3
+        faceView.isHidden = true
+        faceDataView.isHidden = true
+        self.view.addSubview(faceView)
+        self.view.insertSubview(faceView, at: 0)
+        
+        self.view.addSubview(faceDataView)
+        
+        faceScoreLabel.textColor = .blue
+        faceScoreLabel.font = .systemFont(ofSize: 13)
+        faceScoreLabel.numberOfLines = 2
+        faceScoreLabel.text = "Face Score\n3.0000"
+        faceScoreLabel.minimumScaleFactor = 0.2
+        faceScoreLabel.textAlignment = .right
+        faceDataView.addSubview(faceScoreLabel)
+        
+        faceDistanceLabel.font = .systemFont(ofSize: 13)
+        faceDistanceLabel.textColor = .blue
+        faceDistanceLabel.numberOfLines = 2
+        faceDistanceLabel.text = "Face Distance\n432.00"
+        faceDistanceLabel.minimumScaleFactor = 0.2
+        faceDistanceLabel.textAlignment = .right
+        faceDataView.addSubview(faceDistanceLabel)
+        
+        faceDataView.translatesAutoresizingMaskIntoConstraints = false
+        faceScoreLabel.translatesAutoresizingMaskIntoConstraints = false
+        faceDistanceLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        
+        NSLayoutConstraint.activate([
+            NSLayoutConstraint(item: faceDataView,
+                               attribute: .top,
+                               relatedBy: .equal,
+                               toItem: preview,
+                               attribute: .top,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceDataView,
+                               attribute: .trailing,
+                               relatedBy: .equal,
+                               toItem: self.view,
+                               attribute: .trailing,
+                               multiplier: 1.0,
+                               constant: -10),
+            
+            NSLayoutConstraint(item: faceScoreLabel,
+                               attribute: .top,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .top,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceScoreLabel,
+                               attribute: .trailing,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .trailing,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceScoreLabel,
+                               attribute: .leading,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .leading,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceScoreLabel,
+                               attribute: .bottom,
+                               relatedBy: .equal,
+                               toItem: faceDistanceLabel,
+                               attribute: .top,
+                               multiplier: 1.0,
+                               constant: -15),
+            
+            NSLayoutConstraint(item: faceDistanceLabel,
+                               attribute: .leading,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .leading,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceDistanceLabel,
+                               attribute: .trailing,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .trailing,
+                               multiplier: 1.0,
+                               constant: 0),
+            NSLayoutConstraint(item: faceDistanceLabel,
+                               attribute: .bottom,
+                               relatedBy: .equal,
+                               toItem: faceDataView,
+                               attribute: .bottom,
+                               multiplier: 1.0,
+                               constant: 0),
+        ])
+        
     }
     
     private func initStartTrackingUI(){
@@ -592,6 +719,8 @@ extension ViewController {
         disableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
+        faceView.isHidden = true
+        faceDataView.isHidden = true
     }
     
     private func setIdleStateUIComponents(){
@@ -604,6 +733,8 @@ extension ViewController {
         disableBtn(select: oneRadioBtn)
         hidePointView(view: gazePointView!)
         hidePointView(view: caliPointView!)
+        faceView.isHidden = true
+        faceDataView.isHidden = true
     }
     
     private func setInitializedStateUIComponents(){
@@ -614,6 +745,8 @@ extension ViewController {
         disableBtn(select: oneRadioBtn)
         hidePointView(view: gazePointView!)
         hidePointView(view: caliPointView!)
+        faceView.isHidden = true
+        faceDataView.isHidden = true
     }
     
     private func setTrackingStateUIComponents(){
@@ -623,6 +756,8 @@ extension ViewController {
         enableBtn(select: fiveRadioBtn)
         enableBtn(select: oneRadioBtn)
         hidePointView(view: caliPointView!)
+        faceView.isHidden = false
+        faceDataView.isHidden = false
     }
     
     private func setCalibratingUIComponents(){
@@ -631,6 +766,8 @@ extension ViewController {
         enableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
+        faceView.isHidden = false
+        faceDataView.isHidden = false
     }
     
     private func showUserStatusLabel(){
@@ -663,12 +800,12 @@ extension ViewController {
                         if let result = self.tracker?.startCollectSamples() {
                             print("startCollectSamples : \(result)")
                         }
-                    })              
+                    })
                 }
             }
         }
     }
-    private func setStatusLableText(contents : String){
+    private func setStatusLabelText(contents : String){
         DispatchQueue.main.async {
             self.statusLabel.text = contents
         }

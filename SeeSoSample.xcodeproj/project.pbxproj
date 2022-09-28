@@ -71,6 +71,7 @@
 			children = (
 				D33B692324931FBE00137492 /* SeeSoSample */,
 				D33B692224931FBE00137492 /* Products */,
+				F90709E928DB00DD007BAB7A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -106,6 +107,13 @@
 				D3F882E5265C923E0013B273 /* UserStatusLabel.swift */,
 			);
 			path = views;
+			sourceTree = "<group>";
+		};
+		F90709E928DB00DD007BAB7A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
