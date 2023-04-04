@@ -66,11 +66,6 @@ class ViewController: UIViewController {
     
     let preview : UIView = UIView()
     
-    // Face Data View
-    let faceView: UIView = UIView()
-    let faceDataView: UIView = UIView()
-    let faceScoreLabel = UILabel()
-    let faceDistanceLabel = UILabel()
 
     
     var curState : AppState? = nil {
@@ -277,12 +272,10 @@ extension ViewController : InitializationDelegate {
                 // interval's default is 30s, setting 10s for demo
                 self.tracker?.setAttentionInterval(interval: 10)
             }
-            self.tracker?.setDelegates(statusDelegate: self,
-                                       gazeDelegate: self,
-                                       calibrationDelegate: self,
-                                       userStatusDelegate: userStatusDelegate,
-                                       imageDelegate: nil,
-                                       faceDelegate: self)
+            self.tracker?.statusDelegate = self
+            self.tracker?.gazeDelegate = self
+            self.tracker?.calibrationDelegate = self
+            self.tracker?.userStatusDelegate = userStatusDelegate
             curState = .Initialized
         } else {
             setStatusLabelText(contents: error.description)
@@ -372,19 +365,6 @@ extension ViewController : CalibrationDelegate {
         enableSaveBtn()
     }
 }
-extension ViewController: FaceDelegate {
-    func onFace(faceInfo: FaceInfo) {
-        var rotationWithPerspective = CATransform3DIdentity
-        rotationWithPerspective.m34 = 1.0/500.0
-        let radians = Double.pi / 2
-        rotationWithPerspective = CATransform3DRotate(rotationWithPerspective, radians * faceInfo.yaw, 0.5, 0, 0);
-        rotationWithPerspective = CATransform3DRotate(rotationWithPerspective, radians * faceInfo.pitch, 0, 0.5, 0);
-        faceView.layer.transform = rotationWithPerspective
-        
-        faceScoreLabel.text = String(NSString(format: "Face Score\n%.4f", faceInfo.score))
-        faceDistanceLabel.text = String(NSString(format: "Face Distance\n%.4f", faceInfo.centerXYZ.z))
-    }
-}
 
 
 // UI componenents setting functions
@@ -401,7 +381,6 @@ extension ViewController {
         initCalibrationPointView()
         initCalibrationModeUI()
         initPreview()
-        initFaceView()
         initUserStatusLabel()
     }
     
@@ -450,107 +429,7 @@ extension ViewController {
         preview.alpha = 0.7
         self.view.addSubview(preview)
     }
-    private func initFaceView() {
-        faceView.frame = preview.frame
-        faceView.layer.borderColor = UIColor.blue.cgColor
-        faceView.layer.borderWidth = 3
-        faceView.isHidden = true
-        faceDataView.isHidden = true
-        self.view.addSubview(faceView)
-        self.view.insertSubview(faceView, at: 0)
-        
-        self.view.addSubview(faceDataView)
-        
-        faceScoreLabel.textColor = .blue
-        faceScoreLabel.font = .systemFont(ofSize: 13)
-        faceScoreLabel.numberOfLines = 2
-        faceScoreLabel.text = "Face Score\n3.0000"
-        faceScoreLabel.minimumScaleFactor = 0.2
-        faceScoreLabel.textAlignment = .right
-        faceDataView.addSubview(faceScoreLabel)
-        
-        faceDistanceLabel.font = .systemFont(ofSize: 13)
-        faceDistanceLabel.textColor = .blue
-        faceDistanceLabel.numberOfLines = 2
-        faceDistanceLabel.text = "Face Distance\n432.00"
-        faceDistanceLabel.minimumScaleFactor = 0.2
-        faceDistanceLabel.textAlignment = .right
-        faceDataView.addSubview(faceDistanceLabel)
-        
-        faceDataView.translatesAutoresizingMaskIntoConstraints = false
-        faceScoreLabel.translatesAutoresizingMaskIntoConstraints = false
-        faceDistanceLabel.translatesAutoresizingMaskIntoConstraints = false
-        
-        
-        NSLayoutConstraint.activate([
-            NSLayoutConstraint(item: faceDataView,
-                               attribute: .top,
-                               relatedBy: .equal,
-                               toItem: preview,
-                               attribute: .top,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceDataView,
-                               attribute: .trailing,
-                               relatedBy: .equal,
-                               toItem: self.view,
-                               attribute: .trailing,
-                               multiplier: 1.0,
-                               constant: -10),
-            
-            NSLayoutConstraint(item: faceScoreLabel,
-                               attribute: .top,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .top,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceScoreLabel,
-                               attribute: .trailing,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .trailing,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceScoreLabel,
-                               attribute: .leading,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .leading,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceScoreLabel,
-                               attribute: .bottom,
-                               relatedBy: .equal,
-                               toItem: faceDistanceLabel,
-                               attribute: .top,
-                               multiplier: 1.0,
-                               constant: -15),
-            
-            NSLayoutConstraint(item: faceDistanceLabel,
-                               attribute: .leading,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .leading,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceDistanceLabel,
-                               attribute: .trailing,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .trailing,
-                               multiplier: 1.0,
-                               constant: 0),
-            NSLayoutConstraint(item: faceDistanceLabel,
-                               attribute: .bottom,
-                               relatedBy: .equal,
-                               toItem: faceDataView,
-                               attribute: .bottom,
-                               multiplier: 1.0,
-                               constant: 0),
-        ])
-        
-    }
+
     
     private func initStartTrackingUI(){
         startTrackingSwitch.frame.size = CGSize(width: 50, height: 50)
@@ -719,8 +598,7 @@ extension ViewController {
         disableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
-        faceView.isHidden = true
-        faceDataView.isHidden = true
+
     }
     
     private func setIdleStateUIComponents(){
@@ -733,8 +611,7 @@ extension ViewController {
         disableBtn(select: oneRadioBtn)
         hidePointView(view: gazePointView!)
         hidePointView(view: caliPointView!)
-        faceView.isHidden = true
-        faceDataView.isHidden = true
+
     }
     
     private func setInitializedStateUIComponents(){
@@ -745,8 +622,6 @@ extension ViewController {
         disableBtn(select: oneRadioBtn)
         hidePointView(view: gazePointView!)
         hidePointView(view: caliPointView!)
-        faceView.isHidden = true
-        faceDataView.isHidden = true
     }
     
     private func setTrackingStateUIComponents(){
@@ -756,8 +631,7 @@ extension ViewController {
         enableBtn(select: fiveRadioBtn)
         enableBtn(select: oneRadioBtn)
         hidePointView(view: caliPointView!)
-        faceView.isHidden = false
-        faceDataView.isHidden = false
+
     }
     
     private func setCalibratingUIComponents(){
@@ -766,8 +640,7 @@ extension ViewController {
         enableBtn(select: calibrationBtn)
         disableBtn(select: fiveRadioBtn)
         disableBtn(select: oneRadioBtn)
-        faceView.isHidden = false
-        faceDataView.isHidden = false
+
     }
     
     private func showUserStatusLabel(){
