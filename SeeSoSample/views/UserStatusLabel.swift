@@ -97,7 +97,7 @@ extension UserStatusLabel : UserStatusDelegate {
     self.setLabelText(attentionText: String(Double(round(1000 * score)/1000)))
     print("\(#function) \(timestampBegin) ~ \(timestampEnd) : \(score)")
   }
-  func onBlink(timestamp: Int, isBlinkLeft: Bool, isBlinkRight: Bool, isBlink: Bool, leftOpenness: Double, rightOpenness: Double) {
+  func onBlink(timestamp: Int, isBlinkLeft: Bool, isBlinkRight: Bool, isBlink: Bool, eyeOpenness: Double) {
     if lastBlink != isBlink || self.blinkLabel.text == nil || self.blinkLabel.text!.count <= 0 {
       self.setLabelText(blinkText: String(isBlink))
     }
