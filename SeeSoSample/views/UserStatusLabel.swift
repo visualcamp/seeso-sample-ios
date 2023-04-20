@@ -14,8 +14,8 @@ class UserStatusLabel : UIView {
   let blinkLabel : UILabel = UILabel()
   let drowsinessLabel : UILabel = UILabel()
   
-  var lastDrowsiness : Bool = false
-  var lastBlink : Bool = false
+  var lastDrowsiness : Bool = true
+  var lastBlink : Bool = true
   
   override init(frame: CGRect) {
     super.init(frame: frame)
