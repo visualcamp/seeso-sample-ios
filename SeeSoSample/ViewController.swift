@@ -48,6 +48,7 @@ class ViewController: UIViewController {
     let gazeFilterSwitch : UISwitch = UISwitch()
     
     var gazePointView : GazePointView? = nil
+    let faceBoundView : UIView = UIView()
     var caliPointView : CalibrationPointView? = nil
     
     var caliMode : CalibrationMode = .FIVE_POINT
@@ -275,6 +276,7 @@ extension ViewController : InitializationDelegate {
             self.tracker?.statusDelegate = self
             self.tracker?.gazeDelegate = self
             self.tracker?.calibrationDelegate = self
+            self.tracker?.faceDelegate = self
             self.tracker?.userStatusDelegate = userStatusDelegate
             curState = .Initialized
         } else {
@@ -337,6 +339,47 @@ extension ViewController : GazeDelegate {
     
 }
 
+extension ViewController: FaceDelegate {
+    func onFace(faceInfo: FaceInfo) {
+        DispatchQueue.main.async {
+            let rotatedRect = self.rotateFaceRect(faceBox: faceInfo.rect, imageSize: faceInfo.imageSize)
+            let fitRect = self.fitPreviewBound(faceRect: rotatedRect, imageSize: faceInfo.imageSize)
+            self.moveFace(frame: fitRect)
+        }
+
+    }
+
+    /**
+     The used image is rotated 90 degrees counterclockwise, so we need to rotate the face position values 90 degrees clockwise.
+     Additionally, the preview displays a mirrored image, so we need a function to flip it horizontally.
+     */
+    func rotateFaceRect(faceBox: CGRect, imageSize: CGSize) -> CGRect {
+        let rotatedTop = faceBox.minX
+        let rotatedLeft = faceBox.minY
+        let rotatedBottom = rotatedTop + faceBox.width
+        let rotatedRight = rotatedLeft + faceBox.height
+
+        return CGRect(x: rotatedLeft, y: rotatedTop, width: rotatedRight - rotatedLeft, height: rotatedBottom - rotatedTop)
+    }
+
+    /**
+     Adjusts the face positions to fit the preview size, considering that the preview size may differ from the image size.
+     */
+    func fitPreviewBound(faceRect : CGRect, imageSize : CGSize) -> CGRect {
+        let fitX = faceRect.minX / imageSize.height * self.preview.frame.width
+        let fitY = faceRect.minY / imageSize.width * self.preview.frame.height
+        let fitWidth = faceRect.width / imageSize.height * self.preview.frame.width
+        let fitHeight = faceRect.height / imageSize.width * self.preview.frame.height
+
+        return CGRect(x: fitX, y: fitY, width: fitWidth, height: fitHeight)
+    }
+
+    func moveFace(frame : CGRect){
+        self.faceBoundView.frame = frame
+        self.preview.bringSubviewToFront(faceBoundView)
+    }
+}
+
 extension ViewController : CalibrationDelegate {
     func onCalibrationProgress(progress: Double) {
         caliPointView?.setProgress(progress: progress)
@@ -381,12 +424,13 @@ extension ViewController {
         initCalibrationPointView()
         initCalibrationModeUI()
         initPreview()
+        initFaceBoundView()
         initUserStatusLabel()
     }
     
     private func initStatusLabel(){
         statusLabel.frame.size = CGSize(width: 120, height: 40)
-        statusLabel.center = CGPoint(x: self.view.frame.width/2, y: 50)
+        statusLabel.center = CGPoint(x: self.view.frame.width/2, y: 70)
         statusLabel.textAlignment = .center
         statusLabel.adjustsFontSizeToFitWidth = true
         statusLabel.textColor = UIColor.blue
@@ -424,7 +468,7 @@ extension ViewController {
     }
     
     private func initPreview() {
-        preview.frame.size = CGSize(width: 160, height: 120)
+        preview.frame.size = CGSize(width: 120, height: 160)
         preview.center = CGPoint(x: self.view.frame.width/2, y: 160)
         preview.alpha = 0.7
         self.view.addSubview(preview)
@@ -465,6 +509,13 @@ extension ViewController {
         self.gazePointView = GazePointView(frame: self.view.bounds)
         self.view.addSubview(gazePointView!)
         hidePointView(view: gazePointView!)
+    }
+
+    private func initFaceBoundView() {
+        self.faceBoundView.layer.borderWidth = 2
+        self.faceBoundView.layer.borderColor = UIColor.red.cgColor
+        self.faceBoundView.backgroundColor = .clear
+        self.preview.addSubview(faceBoundView)
     }
     
     private func initCalibrationPointView(){
