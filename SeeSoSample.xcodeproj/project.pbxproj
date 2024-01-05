@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63D443DA2B46B21900C22D83 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D443D92B46B21900C22D83 /* CameraManager.swift */; };
 		D32578CB24937B7E0073F5A6 /* CalibrationPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32578CA24937B7E0073F5A6 /* CalibrationPointView.swift */; };
 		D32578D824970D6D0073F5A6 /* RadioButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32578D724970D6D0073F5A6 /* RadioButton.swift */; };
 		D33B692524931FBE00137492 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33B692424931FBE00137492 /* AppDelegate.swift */; };
@@ -33,6 +34,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		63D443D92B46B21900C22D83 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		D32578CA24937B7E0073F5A6 /* CalibrationPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationPointView.swift; sourceTree = "<group>"; };
 		D32578D724970D6D0073F5A6 /* RadioButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioButton.swift; sourceTree = "<group>"; };
 		D33B692124931FBE00137492 /* SeeSoSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeeSoSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,6 +97,7 @@
 				D33B692D24931FC200137492 /* Assets.xcassets */,
 				D33B692F24931FC200137492 /* LaunchScreen.storyboard */,
 				D33B693224931FC200137492 /* Info.plist */,
+				63D443D92B46B21900C22D83 /* CameraManager.swift */,
 			);
 			path = SeeSoSample;
 			sourceTree = "<group>";
@@ -190,6 +193,7 @@
 			files = (
 				D33B692924931FBE00137492 /* ViewController.swift in Sources */,
 				D3F882E6265C923E0013B273 /* UserStatusLabel.swift in Sources */,
+				63D443DA2B46B21900C22D83 /* CameraManager.swift in Sources */,
 				D33B692524931FBE00137492 /* AppDelegate.swift in Sources */,
 				D32578CB24937B7E0073F5A6 /* CalibrationPointView.swift in Sources */,
 				D32578D824970D6D0073F5A6 /* RadioButton.swift in Sources */,

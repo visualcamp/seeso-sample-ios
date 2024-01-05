@@ -13,7 +13,7 @@ import SeeSo
 class ViewController: UIViewController {
     
     let licenseKey : String = "Input your key." // Please enter the key value for development issued by the SeeSo.io
-    
+
     //
     var frame : Int = 0
     var lastTime : Double = 0
@@ -65,8 +65,10 @@ class ViewController: UIViewController {
     
     var isFiltered : Bool = false
     
-    let preview : UIView = UIView()
-    
+    let preview : UIImageView = UIImageView()
+
+    var camera: CameraManager?
+
 
     
     var curState : AppState? = nil {
@@ -118,6 +120,8 @@ class ViewController: UIViewController {
                     self.disableLoadBtn()
                     self.disableSaveBtn()
                     self.enableSwitch(select: self.userStatusSwitch)
+                        self.camera = CameraManager()
+                        self.camera?.delegate = self
                 case .Initialized:
                     self.setInitializedStateUIComponents()
                     self.tracker?.removeCameraPreview()
@@ -237,19 +241,29 @@ class ViewController: UIViewController {
     }
     
     private func startTracking(){
-        tracker?.startTracking()
+//        tracker?.startTracking()
+        camera?.start()
     }
     
     private func stopTracking(){
-        tracker?.stopTracking()
+//        tracker?.stopTracking()
+        camera?.stop()
     }
     
     private func initGazeTracker() {
         let options = UserStatusOption()
-        if userStatusOn {
-            options.useAll()
+        if let cameraManager = camera, let input = cameraManager.getInput() {
+            let isExternalMode = options.useExternalMode(input: input)
+
+            if isExternalMode {
+                if userStatusOn {
+                    options.useAll()
+                }
+                GazeTracker.initGazeTracker(license: licenseKey, delegate: self, option: options)
+            } else {
+                print("failed External mode")
+            }
         }
-        GazeTracker.initGazeTracker(license: licenseKey, delegate: self, option: options)
     }
     
     private func deinitGazeTracker(){
@@ -261,6 +275,17 @@ class ViewController: UIViewController {
     
     
     
+}
+
+extension ViewController: CameraManagerDelegate {
+    func videoOutput(sampleBuffer: CMSampleBuffer) {
+        let result = self.tracker?.addCMSampleBuffer(sampleBuffer: sampleBuffer)
+        if result == false {
+            print("image abnormal")
+        }
+    }
+
+
 }
 
 extension ViewController : InitializationDelegate {
@@ -276,7 +301,6 @@ extension ViewController : InitializationDelegate {
             self.tracker?.statusDelegate = self
             self.tracker?.gazeDelegate = self
             self.tracker?.calibrationDelegate = self
-            self.tracker?.faceDelegate = self
             self.tracker?.userStatusDelegate = userStatusDelegate
             curState = .Initialized
         } else {
@@ -290,7 +314,7 @@ extension ViewController : InitializationDelegate {
 extension ViewController : StatusDelegate {
     func onStarted() {
         curState = .Tracking
-        self.tracker?.setCameraPreview(preview: self.preview)
+        //self.tracker?.setCameraPreview(preview: self.preview)
         if userStatusOn {
             showUserStatusLabel()
         }
@@ -300,7 +324,7 @@ extension ViewController : StatusDelegate {
         setStatusLabelText(contents: "onStopped : \(error.description)")
         resetSwitch(select: startTrackingSwitch)
         self.enableSwitch(select: startTrackingSwitch)
-        self.tracker?.removeCameraPreview()
+        //self.tracker?.removeCameraPreview()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
             self.curState = .Initialized
         })
@@ -337,47 +361,6 @@ extension ViewController : GazeDelegate {
         }
     }
     
-}
-
-extension ViewController: FaceDelegate {
-    func onFace(faceInfo: FaceInfo) {
-        DispatchQueue.main.async {
-            let rotatedRect = self.rotateFaceRect(faceBox: faceInfo.rect, imageSize: faceInfo.imageSize)
-            let fitRect = self.fitPreviewBound(faceRect: rotatedRect, imageSize: faceInfo.imageSize)
-            self.moveFace(frame: fitRect)
-        }
-
-    }
-
-    /**
-     The used image is rotated 90 degrees counterclockwise, so we need to rotate the face position values 90 degrees clockwise.
-     Additionally, the preview displays a mirrored image, so we need a function to flip it horizontally.
-     */
-    func rotateFaceRect(faceBox: CGRect, imageSize: CGSize) -> CGRect {
-        let rotatedTop = faceBox.minX
-        let rotatedLeft = faceBox.minY
-        let rotatedBottom = rotatedTop + faceBox.width
-        let rotatedRight = rotatedLeft + faceBox.height
-
-        return CGRect(x: rotatedLeft, y: rotatedTop, width: rotatedRight - rotatedLeft, height: rotatedBottom - rotatedTop)
-    }
-
-    /**
-     Adjusts the face positions to fit the preview size, considering that the preview size may differ from the image size.
-     */
-    func fitPreviewBound(faceRect : CGRect, imageSize : CGSize) -> CGRect {
-        let fitX = faceRect.minX / imageSize.height * self.preview.frame.width
-        let fitY = faceRect.minY / imageSize.width * self.preview.frame.height
-        let fitWidth = faceRect.width / imageSize.height * self.preview.frame.width
-        let fitHeight = faceRect.height / imageSize.width * self.preview.frame.height
-
-        return CGRect(x: fitX, y: fitY, width: fitWidth, height: fitHeight)
-    }
-
-    func moveFace(frame : CGRect){
-        self.faceBoundView.frame = frame
-        self.preview.bringSubviewToFront(faceBoundView)
-    }
 }
 
 extension ViewController : CalibrationDelegate {
